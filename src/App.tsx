@@ -1,51 +1,44 @@
-import { useState } from 'react'
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import './App.css';
-import { InputFile } from './homepage/UploadArea';
-import { Crop, Wand2, ImageOff } from "lucide-react"
-import CropPopUp from "./homepage/cropPopUp"
+import "./App.css";
+import { UploadArea } from "./homepage/UploadArea";
+import { Wand2, ImageOff } from "lucide-react";
+import CropPopUp from "./homepage/cropPopUp";
 
 function App() {
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
-    // for crop and resize pop up
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const handleOpenModal = () => {
-        setIsModalOpen(true);
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      setUploadedImage(imageUrl); // Store the image URL
+    } else {
+      setUploadedImage(null); // Reset the uploaded image if no file is selected
     }
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-    }
+  };
 
   return (
     <>
-        <div className='flex items-center justify-items-center h-screen flex-col'>
-            <h1 className='font-bold'>OOpSies ID Photo Processor</h1>
-            <p className='text-gray-700 py-4 pb-8'>Upload your image and choose an option to get started</p>
-            <InputFile />
+      <div className="flex items-center justify-center h-screen flex-col">
+        <h1 className="font-bold">OOpSies ID Photo Processor</h1>
+        <p className="text-gray-700 py-4 pb-8">Upload your image and choose an option to get started</p>
 
+        {/* Upload Area */}
+        <UploadArea
+          uploadedImage={uploadedImage}
+          onImageUpload={handleImageUpload}
+        />
 
-            {/* button option */}
-            <div className='flex pt-8 space-x-4'>
-                <Button onClick={handleOpenModal}>
-                    <Crop />Crop & Resize
-                </Button>
-                <Button><Wand2 />Enhance</Button>
-                <Button><ImageOff />Remove Background</Button>
-            </div>
-
-            {/* Popup */}
-            {isModalOpen && (
-                <CropPopUp isOpen={isModalOpen} onClose={handleCloseModal} />
-            )}
-
-
-
+        {/* Button options */}
+        <div className="flex pt-8 space-x-4">
+          <CropPopUp />
+          <Button><Wand2 />Enhance</Button>
+          <Button><ImageOff />Remove Background</Button>
         </div>
-        
-
-
+      </div>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
