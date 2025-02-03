@@ -1,10 +1,20 @@
 import { useState } from 'react'
 import { Button } from "@/components/ui/button";
 import './App.css';
-import { InputFile } from './UploadArea';
+import { InputFile } from './homepage/UploadArea';
 import { Crop, Wand2, ImageOff } from "lucide-react"
+import CropPopUp from "./homepage/cropPopUp"
 
 function App() {
+
+    // for crop and resize pop up
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const handleOpenModal = () => {
+        setIsModalOpen(true);
+    }
+    const handleCloseModal = () => {
+        setIsModalOpen(false);
+    }
 
   return (
     <>
@@ -16,12 +26,19 @@ function App() {
 
             {/* button option */}
             <div className='flex pt-8 space-x-4'>
-                <Button ><Crop />Crop & Resize</Button>
+                <Button onClick={handleOpenModal}>
+                    <Crop />Crop & Resize
+                </Button>
                 <Button><Wand2 />Enhance</Button>
                 <Button><ImageOff />Remove Background</Button>
             </div>
 
-            
+            {/* Popup */}
+            {isModalOpen && (
+                <CropPopUp isOpen={isModalOpen} onClose={handleCloseModal} />
+            )}
+
+
 
         </div>
         

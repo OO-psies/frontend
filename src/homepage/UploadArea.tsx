@@ -1,5 +1,4 @@
-import React from "react";
-import logo from "./icons/upload.png";
+import UploadLogo from "../icons/upload.png";
 
 export function InputFile() {
   return (
@@ -9,7 +8,7 @@ export function InputFile() {
         htmlFor="file-upload"
         className="cursor-pointer text-gray-500 hover:text-gray-700 flex flex-col items-center"
       >
-        <img src={logo} alt="Upload Logo" className="w-16 h-16 mb-4" />
+        <img src={UploadLogo} alt="Upload Logo" className="w-16 h-16 mb-4" />
         <p className="text-sm text-gray-500 font-medium">Click to upload or drag and drop</p>
         <p className="text-xs text-gray-400">PNG or JPG</p>
       </label>
