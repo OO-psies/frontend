@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import "./App.css";
 import { UploadArea } from "./homepage/UploadArea";
-import { Wand2, ImageOff } from "lucide-react";
+import { Wand2, ImageOff, Download } from "lucide-react";
 import CropPopUp from "./homepage/cropPopUp";
 
 function App() {
@@ -20,6 +20,8 @@ function App() {
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    console.log("Uploaded Image URL:", uploadedImage);
+
     if (file) {
       // [JAMESZ] for sending image to backend via FormData
       const base64Image = await convertToBase64(file);
@@ -41,7 +43,7 @@ function App() {
       }
 
     } else {
-      setUploadedImage(null); // Reset the uploaded image if no file is selected
+      setUploadedImage(null); // Reset state if no file is selected
     }
   };
 
@@ -59,9 +61,10 @@ function App() {
 
         {/* Button options */}
         <div className="flex pt-8 space-x-4">
-          <CropPopUp />
-          <Button><Wand2 />Enhance</Button>
-          <Button><ImageOff />Remove Background</Button>
+          <CropPopUp uploadedImage = {uploadedImage} />
+          <Button disabled={!uploadedImage}><Wand2 />Enhance</Button>
+          <Button disabled={!uploadedImage}><ImageOff />Remove Background</Button>
+          <Button disabled={!uploadedImage} className="bg-emerald-600 hover:bg-emerald-500"><Download />Download</Button>
         </div>
       </div>
     </>
