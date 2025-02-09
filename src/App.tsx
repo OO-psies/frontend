@@ -22,7 +22,9 @@ function App() {
     <>
       <div className="flex items-center justify-center h-screen flex-col">
         <h1 className="font-bold">OOpSies ID Photo Processor</h1>
-        <p className="text-gray-700 py-4 pb-8">Upload your image and choose an option to get started</p>
+        <p className="text-gray-700 py-4 pb-8">
+          Upload your image and choose an option to get started
+        </p>
 
         {/* Upload Area */}
         <UploadArea
@@ -33,8 +35,14 @@ function App() {
         {/* Button options */}
         <div className="flex pt-8 space-x-4">
           <CropPopUp />
-          <Button><Wand2 />Enhance</Button>
-          <Button><ImageOff />Remove Background</Button>
+          <Button>
+            <Wand2 />
+            Enhance
+          </Button>
+          <Button>
+            <ImageOff />
+            Remove Background
+          </Button>
         </div>
       </div>
     </>
