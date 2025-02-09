@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import "./App.css";
 import { UploadArea } from "./homepage/UploadArea";
-import { Wand2, ImageOff } from "lucide-react";
+import { Wand2, ImageOff, Download } from "lucide-react";
 import CropPopUp from "./homepage/cropPopUp";
 
 function App() {
@@ -35,6 +35,7 @@ function App() {
           <CropPopUp />
           <Button><Wand2 />Enhance</Button>
           <Button><ImageOff />Remove Background</Button>
+          <Button className="bg-green-600"><Download />Download</Button>
         </div>
       </div>
     </>
