@@ -3,15 +3,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Crop, Scissors, Globe} from "lucide-react"
 import { Button } from "@/components/ui/button";
 import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
-import { useState } from "react";
-import ManualCrop from "./ManualCrop";
+import React, { useState, useEffect } from 'react'
 
+import Cropper from 'cropperjs';
+interface CropPopUpProps {
+    uploadedImage: string;
+  }
 
-
-export default function CropPopUp(){
+export default function CropPopUp({ uploadedImage }: CropPopUpProps){
     const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-    const [showManualCrop, setShowManualCrop] = useState<boolean>(false);
+
+    
 
     const handleAutoCrop = () => {
         if (!selectedCountry) return;
@@ -25,12 +28,6 @@ export default function CropPopUp(){
         }
     };
 
-        const handleManualCropClick = () => {
-            setIsModalOpen(false); // Close the modal
-            setShowManualCrop(true);
-            console.log("Manually Crop & Resize triggered");
-
-    };
 
   return (
     <>
@@ -38,24 +35,33 @@ export default function CropPopUp(){
 
         {/* button */}
         <DialogTrigger asChild>
-            <Button onClick={ () => setIsModalOpen(true)}><Crop />Crop & Resize </Button>
+            <Button disabled={!uploadedImage} onClick={ () => setIsModalOpen(true)}><Crop />Crop & Resize </Button>
         </DialogTrigger>
 
         {/* content */}
         <DialogContent>
             <DialogHeader>
             <DialogTitle>How would you like to crop and resize your photo?</DialogTitle>
-            <DialogDescription className="pb-4">Select an option.</DialogDescription>
-            <Button disabled={selectedCountry} onClick={handleManualCropClick}><Scissors />Manually Crop & Resize</Button>
+            <DialogDescription className="pb-4">Manually Crop By Dragging The Corners <br></br>Or Select A Country For Auto-Crop</DialogDescription>
 
-            <br></br>
-            <hr className="h-px bg-gray-400 border-0  my-8"></hr>
+            {/* ------------------------DISPLAY THE UPLOADED PICTURE ------------------------ */}
+            <img src={uploadedImage} className="pb-4" />
 
-            <p className="pt-4">Or select a country for auto-crop:</p>
-                <Select onValueChange={setSelectedCountry}>
+            {/* ------------------------END OF UPLOADED PICTURE ------------------------ */}
+
+
+            <Select onValueChange={setSelectedCountry}>
+
+                {/* display the dropdown */}
                 <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Country" />
+                    <div className="flex items-center space-x-2">
+                        <Globe className="w-5 h-5 text-gray-500" />
+                        <SelectValue placeholder="Country" />
+                    </div>
                 </SelectTrigger>
+
+
+                {/* display all the countries in the dropdown */}
                 <SelectContent>
                     {Object.keys(IDSizeByCountry).map((country) => (
                     <SelectItem key={country} value={country}>
@@ -63,10 +69,11 @@ export default function CropPopUp(){
                     </SelectItem>
                     ))}
                 </SelectContent>
-                </Select>
+
+            </Select>
 
                 <div>
-                    <Button onClick={handleAutoCrop} disabled={!selectedCountry} className="mt-2"><Globe />Auto Crop For Selected Country</Button>
+                    <Button onClick={handleAutoCrop} disabled={!selectedCountry} className="mt-2">Done</Button>
                 </div>
             </DialogHeader>
         </DialogContent>
