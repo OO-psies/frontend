@@ -20,7 +20,7 @@ function App() {
 
       // [JAMESZ] testing sending to backend
       try {
-        const response = await fetch("http://localhost:8080/api/upload", {
+        const response = await fetch("https://photoid.onrender.com/api/grabcut", {
           method: "POST",
           body: formData, // No need to set headers, browser automatically handles it
         });
