@@ -8,11 +8,28 @@ import CropPopUp from "./homepage/cropPopUp";
 function App() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // [JAMESZ] for sending image to backend via FormData
+      const formData = new FormData();
+      formData.append("image", file);
+
       const imageUrl = URL.createObjectURL(file);
       setUploadedImage(imageUrl); // Store the image URL
+
+      // [JAMESZ] testing sending to backend
+      try {
+        const response = await fetch("http://localhost:8080/api/upload", {
+          method: "POST",
+          body: formData, // No need to set headers, browser automatically handles it
+        });
+        const data = await response.json();
+        console.log("Server Response:", data);
+      } catch (error) {
+        console.error("Upload failed:", error);
+      }
+
     } else {
       setUploadedImage(null); // Reset the uploaded image if no file is selected
     }
