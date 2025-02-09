@@ -8,12 +8,21 @@ import CropPopUp from "./homepage/cropPopUp";
 function App() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
+  // Convert file to Base64
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file); // Read file as Base64
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       // [JAMESZ] for sending image to backend via FormData
-      const formData = new FormData();
-      formData.append("image", file);
+      const base64Image = await convertToBase64(file);
 
       const imageUrl = URL.createObjectURL(file);
       setUploadedImage(imageUrl); // Store the image URL
@@ -22,7 +31,8 @@ function App() {
       try {
         const response = await fetch("https://photoid.onrender.com/api/grabcut", {
           method: "POST",
-          body: formData, // No need to set headers, browser automatically handles it
+          // body: formData, // No need to set headers, browser automatically handles it
+          body: JSON.stringify({ image: base64Image })
         });
         const data = await response.json();
         console.log("Server Response:", data);
