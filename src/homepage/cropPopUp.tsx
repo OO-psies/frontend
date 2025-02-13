@@ -6,6 +6,17 @@ import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
 import React, { useState, useEffect } from 'react'
 
 import Cropper from 'cropperjs';
+
+// J
+import ReactCrop, {
+    centerCrop,
+    makeAspectCrop,
+    Crop as CropReact,
+    PixelCrop,
+    convertToPixelCrop,
+  } from 'react-image-crop'
+import 'react-image-crop/dist/ReactCrop.css'
+
 interface CropPopUpProps {
     uploadedImage: string;
   }
