@@ -7,81 +7,74 @@ import CropPopUp from "./homepage/cropPopUp";
 
 function App() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-
-  // Convert file to Base64 (Removes the initial prefixes of Base64)
-  const convertToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file); // Read file as Base64
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        // Remove the 'data:image/<file-type>;base64,' prefix if present
-        const base64Data = base64String.split(",")[1];
-        resolve(base64Data); // This gives you just the base64 part
-      };
-      reader.onerror = (error) => reject(error);
-    });
-  };
+  const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = event.target.files?.[0];
-    console.log("Uploaded Image URL:", uploadedImage);
 
     if (file) {
-      // [JAMESZ] for sending image to backend via FormData
-      const base64Image = await convertToBase64(file);
-
       const imageUrl = URL.createObjectURL(file);
       setUploadedImage(imageUrl); // Store the image URL
-
-      // [JAMESZ] testing sending to backend
-      try {
-        const response = await fetch(
-          "https://photoid.onrender.com/api/grabcut",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json", // Set the content type to JSON
-            },
-            body: JSON.stringify({
-              base64Image: base64Image,
-              // HARD CODED COORDINATES
-              rectX: 0,
-              rectY: 0,
-              rectWidth: 700,
-              rectHeight: 1000,
-            }),
-          }
-        );
-        const data = await response.json();
-        console.log("Server Response:", data);
-      } catch (error) {
-        console.error("Upload failed:", error);
-      }
+      setCroppedImage(null); // Reset cropped image when new image is uploaded
     } else {
-      setUploadedImage(null); // Reset state if no file is selected
+      setUploadedImage(null);
     }
   };
 
   return (
     <>
-      <div className="flex items-center justify-center h-screen flex-col">
-        <h1 className="font-bold">OOpSies ID Photo Processor</h1>
+      <div className="flex flex-col items-center justify-center h-screen">
+        <h1 className="font-bold text-2xl">OOpSies ID Photo Processor</h1>
         <p className="text-gray-700 py-4 pb-8">
           Upload your image and choose an option to get started
         </p>
 
-        {/* Upload Area */}
-        <UploadArea
-          uploadedImage={uploadedImage}
-          onImageUpload={handleImageUpload}
-        />
+        {/* Wrapper for Upload Area & Cropped Image */}
+        <div className="flex flex-row space-x-8">
+          {/* Upload Area (Initially Placeholder, Then Image) */}
+          <div className="flex flex-col items-center">
+            <div className="border border-gray-300 shadow-md rounded-md p-2 w-[350px] h-full flex items-center justify-center">
+              {uploadedImage ? (
+                <img
+                  src={uploadedImage}
+                  alt="Uploaded Preview"
+                  className="w-full h-full object-cover rounded-md"
+                />
+              ) : (
+                <UploadArea
+                  uploadedImage={uploadedImage}
+                  onImageUpload={handleImageUpload}
+                />
+               
+              )}
+            </div>
+            
+            {croppedImage && (
+              <p className="text-gray-600 mt-2">Original Image</p>
 
-        {/* Button options */}
+            )}
+          </div>
+
+          {/* Cropped Image Preview (Only Show if Cropped Image Exists) */}
+          {croppedImage && (
+            <div className="flex flex-col items-center">
+              <div className="border border-gray-300 rounded-md p-2 shadow-md w-[350px] h-[420px] flex items-center justify-center">
+                <img
+                  src={croppedImage}
+                  alt="Cropped Preview"
+                  className="w-full h-full object-cover rounded-md"
+                />
+              </div>
+              <p className="text-gray-600 mt-2">Edited Image</p>
+            </div>
+          )}
+        </div>
+
+        {/* Button Options */}
         <div className="flex pt-8 space-x-4">
-          <CropPopUp uploadedImage={uploadedImage} />
+          <CropPopUp uploadedImage={uploadedImage} setCroppedImage={setCroppedImage} />
           <Button disabled={!uploadedImage}>
             <Wand2 />
             Enhance
