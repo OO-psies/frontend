@@ -8,6 +8,7 @@ import { Crop, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
 
+import Cropper from 'cropperjs';
 interface CropPopUpProps {
   uploadedImage: string;
   setCroppedImage: (image: string | null) => void; // to pass cropped image to app.tsx
