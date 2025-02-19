@@ -4,10 +4,10 @@ import "./App.css";
 import { UploadArea } from "./homepage/UploadArea";
 import { Wand2, ImageOff, Download } from "lucide-react";
 import CropPopUp from "./homepage/cropPopUp";
-import BgRemoverPopUp from "./homepage/BgRemoverComponents/BgRemoverPopUp";
+import BgRemoverPopUp from "./homepage/BgRemoverPopUp";
 
 function App() {
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null); //uploadedImage is showing error saying null is not assignable to string - should i replace with '' and remove <null> from declared type? what if the image somehow uploads a null?
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
   const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image
 
