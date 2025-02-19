@@ -4,10 +4,12 @@ import "./App.css";
 import { UploadArea } from "./homepage/UploadArea";
 import { Wand2, ImageOff, Download } from "lucide-react";
 import CropPopUp from "./homepage/cropPopUp";
+import BgRemoverPopUp from "./homepage/BgRemoverComponents/BgRemoverPopUp";
 
 function App() {
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null); //uploadedImage is showing error saying null is not assignable to string - should i replace with '' and remove <null> from declared type? what if the image somehow uploads a null?
   const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
+  const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -18,6 +20,7 @@ function App() {
       const imageUrl = URL.createObjectURL(file);
       setUploadedImage(imageUrl); // Store the image URL
       setCroppedImage(null); // Reset cropped image when new image is uploaded
+      setBgRemovedImage(null); // Reset bg removed image when new image is uploaded
     } else {
       setUploadedImage(null);
     }
@@ -74,15 +77,24 @@ function App() {
 
         {/* Button Options */}
         <div className="flex pt-8 space-x-4">
-          <CropPopUp uploadedImage={uploadedImage} setCroppedImage={setCroppedImage} />
+        {/* Cropper */}
+          <CropPopUp
+            uploadedImage={uploadedImage}
+            setCroppedImage={setCroppedImage} />
+        {/* Enhance */}
           <Button disabled={!uploadedImage}>
             <Wand2 />
             Enhance
           </Button>
-          <Button disabled={!uploadedImage}>
+        {/* BG Remover */}
+          <BgRemoverPopUp 
+            uploadedImage={uploadedImage}
+            setBgRemovedImage={setBgRemovedImage}/>
+          {/* <Button disabled={!uploadedImage}>
             <ImageOff />
             Remove Background
-          </Button>
+          </Button> */}
+        {/* Download */}
           <Button
             disabled={!uploadedImage}
             className="bg-emerald-600 hover:bg-emerald-500"
