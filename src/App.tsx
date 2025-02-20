@@ -6,6 +6,7 @@ import { Wand2, ImageOff, Download } from "lucide-react";
 import CropPopUp from "./homepage/cropPopUp";
 import BgRemoverPopUp from "./homepage/BgRemoverPopUp";
 
+
 function App() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
@@ -25,6 +26,38 @@ function App() {
       setUploadedImage(null);
     }
   };
+
+  const handleDownload = async () => {
+    let fileName = prompt("Enter a name for the file")?.trim() || "edited_image";
+  
+    // ensure filename remains exactly as inputted
+    fileName = fileName.replace(/[^a-zA-Z0-9-_]/g, ""); // remove special characters except - and _
+  
+    // prioritize downloading only edited images
+    const imageToDownload = croppedImage || bgRemovedImage;
+    if (!imageToDownload) {
+        alert("No edited image available to download.");
+        return;
+    }
+
+    // fetch the image to convert it into a Blob
+    const response = await fetch(imageToDownload);
+    const blob = await response.blob();
+
+    // create an object URL for the Blob
+    const blobUrl = URL.createObjectURL(blob);
+
+    // create a download link
+    const link = document.createElement("a");
+    link.href = blobUrl;
+    link.download = `${fileName}.png`; // ensures filename is exactly as user input
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(blobUrl);
+};
 
   return (
     <>
@@ -98,6 +131,7 @@ function App() {
           <Button
             disabled={!uploadedImage}
             className="bg-emerald-600 hover:bg-emerald-500"
+            onClick={handleDownload}
           >
             <Download />
             Download
