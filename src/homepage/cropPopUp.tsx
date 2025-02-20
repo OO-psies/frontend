@@ -10,7 +10,7 @@ import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
 
 interface CropPopUpProps {
   uploadedImage: string;
-  setCroppedImage: (image: string | null) => void; // to pass cropped image to app.tsx
+  setCroppedImage: (image: string | null) => void;
 }
 
 export default function CropPopUp({ uploadedImage, setCroppedImage }: CropPopUpProps) {
@@ -18,70 +18,134 @@ export default function CropPopUp({ uploadedImage, setCroppedImage }: CropPopUpP
   const imageRef = useRef<HTMLImageElement | null>(null);
   const cropperRef = useRef<Cropper | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [imageLoaded, setImageLoaded] = useState(false); // ensures that cropper is only initialized after the image has been fully loaded
+  const [imageLoaded, setImageLoaded] = useState(false);
 
-  // reset imageLoaded when modal closes
   useEffect(() => {
     if (!isOpen) {
       setImageLoaded(false);
+      setSelectedCountry(null); // Reset country selection when modal closes
     }
   }, [isOpen]);
 
-  // ensure cropper initializes only after the image has loaded
   useEffect(() => {
     if (isOpen && imageLoaded && imageRef.current) {
       console.log("Initializing Cropper...");
       if (cropperRef.current) {
-        cropperRef.current.destroy(); // 
+        cropperRef.current.destroy();
       }
 
       cropperRef.current = new Cropper(imageRef.current, {
-        autoCropArea: 1, 
-        viewMode: 1, // prevents cropping beyond image boundaries
-        dragMode: "crop", // allows user to resize the crop box
+        autoCropArea: 1,
+        viewMode: 1,
+        dragMode: "crop",
         responsive: true,
         zoomable: true,
         background: false,
       });
 
-      console.log("cropper initialized.");
+      console.log("Cropper initialized.");
     }
 
     return () => {
       cropperRef.current?.destroy();
       cropperRef.current = null;
     };
-  }, [isOpen, imageLoaded]); 
+  }, [isOpen, imageLoaded]);
+
+  // auto-crop function when a country is selected
+  const handleCountryChange = (country: string) => {
+    setSelectedCountry(country);
+  
+    if (!cropperRef.current) return;
+  
+    const dimensions = IDSizeByCountry[country as keyof typeof IDSizeByCountry];
+    if (dimensions) {
+      console.log(`Auto-cropping to ${dimensions.width}x${dimensions.height} ${dimensions.unit}`);
+  
+      // calculate aspect ratio
+      const aspectRatio = dimensions.width / dimensions.height;
+  
+      // get image container size
+      const imageElement = imageRef.current;
+      if (!imageElement) return;
+  
+      const imageWidth = imageElement.clientWidth;
+      const imageHeight = imageElement.clientHeight;
+  
+      // determine maximum possible crop area while maintaining aspect ratio
+      let cropWidth = imageWidth * 0.7; // Make crop area 70% of image width
+      let cropHeight = cropWidth / aspectRatio;
+  
+      if (cropHeight > imageHeight * 0.7) {
+        cropHeight = imageHeight * 0.7;
+        cropWidth = cropHeight * aspectRatio;
+      }
+  
+      // set the new crop box size centered
+      cropperRef.current.setCropBoxData({
+        left: (imageWidth - cropWidth) / 2,
+        top: (imageHeight - cropHeight) / 2,
+        width: cropWidth,
+        height: cropHeight,
+      });
+  
+      cropperRef.current.setAspectRatio(aspectRatio); // lock aspect ratio
+    }
+  };
 
   const handleCrop = () => {
     if (!cropperRef.current) return;
 
     let canvas;
+    const imageElement = imageRef.current;
+    if (!imageElement) return;
+
     if (selectedCountry) {
-      const dimensions = IDSizeByCountry[selectedCountry as keyof typeof IDSizeByCountry];
-      if (dimensions) {
-        console.log(`Auto-cropping to ${dimensions.width}x${dimensions.height} ${dimensions.unit}`);
-        canvas = cropperRef.current.getCroppedCanvas({
-          width: dimensions.width,
-          height: dimensions.height,
-        });
-      } else {
-        console.log("No dimensions found for the selected country.");
-        return;
-      }
+        const dimensions = IDSizeByCountry[selectedCountry as keyof typeof IDSizeByCountry];
+        if (dimensions) {
+            console.log(`Auto-cropping to ${dimensions.width}x${dimensions.height} ${dimensions.unit}`);
+
+            // Ensure we maintain the original image resolution by using its natural size
+            const aspectRatio = dimensions.width / dimensions.height;
+            const originalWidth = imageElement.naturalWidth;
+            const originalHeight = imageElement.naturalHeight;
+
+            let newWidth = originalWidth;
+            let newHeight = newWidth / aspectRatio;
+
+            if (newHeight > originalHeight) {
+                newHeight = originalHeight;
+                newWidth = newHeight * aspectRatio;
+            }
+
+            canvas = cropperRef.current.getCroppedCanvas({
+                width: newWidth,
+                height: newHeight,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: "high"
+            });
+        } else {
+            console.log("No dimensions found for the selected country.");
+            return;
+        }
     } else {
-      console.log("Manual cropping using current selection.");
-      canvas = cropperRef.current.getCroppedCanvas();
+        console.log("Manual cropping using current selection.");
+        canvas = cropperRef.current.getCroppedCanvas();
     }
 
     if (canvas) {
-      const croppedDataURL = canvas.toDataURL("image/png");
-      console.log("Cropped Image Data URL:", croppedDataURL);
-      setCroppedImage(croppedDataURL); // pass cropped image to App.tsx
+        // convert canvas to Blob for better quality
+        canvas.toBlob((blob) => {
+            if (blob) {
+                const blobUrl = URL.createObjectURL(blob);
+                console.log("Cropped Image Blob URL:", blobUrl);
+                setCroppedImage(blobUrl);
+            }
+        }, "image/png", 1.0); // ensures no quality loss
     }
 
     setIsOpen(false);
-  };
+};
 
   return (
     <>
@@ -107,12 +171,12 @@ export default function CropPopUp({ uploadedImage, setCroppedImage }: CropPopUpP
                 src={uploadedImage} 
                 alt="To Crop" 
                 style={{ maxWidth: "100%", display: "block" }} 
-                onLoad={() => setImageLoaded(true)} // ensure image is loaded before initializing Cropper
+                onLoad={() => setImageLoaded(true)}
               />
             </div>
 
-            {/* Country selection */}
-            <Select onValueChange={setSelectedCountry}>
+            {/* Country selection for Auto-Cropping */}
+            <Select onValueChange={handleCountryChange}>
               <SelectTrigger className="w-[180px]">
                 <div className="flex items-center space-x-2">
                   <Globe className="w-5 h-5 text-gray-500" />
