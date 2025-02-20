@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import "./App.css";
 import { UploadArea } from "./homepage/UploadArea";
@@ -9,7 +9,7 @@ import BgRemoverPopUp from "./homepage/BgRemoverPopUp";
 function App() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
-  const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image
+  const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image  
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>

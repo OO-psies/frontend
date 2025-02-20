@@ -9,8 +9,8 @@ Functionalities:
 */
 
 import React, { useState, useRef, useEffect } from "react";
-import Cropper from "cropperjs";
-import "cropperjs/dist/cropper.css";
+import { MaskEditor, toMask } from "react-mask-editor";
+import "react-mask-editor/dist/style.css";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton"
@@ -29,13 +29,18 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
     const [bgRemovedImage, loadBgRemovedImage] = useState<string>(''); 
 
     const imageRef = useRef<HTMLImageElement | null>(null);
+    const canvas = useRef<HTMLCanvasElement>();
+
+    useEffect(() => {
+        console.log(canvas.current); // Should log a valid canvas element
+    }, []);
 
     // Helper F0 - Sends image to BE on isOpen
     useEffect(() => {
         if (!isOpen) {
             setImageLoaded(false);
         } else {
-            handleImageUpload();
+            // handleImageUpload();
         }
     }, [isOpen])
     
@@ -94,7 +99,9 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
 
     // F1 - Calls HF1 HF2 (converts and sends to BE for touchup)
     const handleBgRemove = (() => {
+        console.log(toMask(canvas.current))
         console.log("Clicked button for retouchup")
+        console.log(canvas.current); // Should log a valid canvas element
     })
 
     // F2 - Closes Dialog
@@ -138,21 +145,32 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
                 Or click on the areas you want to clean
                 </DialogDescription>
 
-
                 {/* Cropping Image */}
                     <div className="flex mb-10">
                         { isLoading &&
                             <Skeleton className="h-[400px] w-full"/>
                         }
-                        { !isLoading &&
-                            <img 
-                                ref={imageRef} 
-                                src={uploadedImage} //#### to change to bg removed image from be
-                                alt="To Crop" 
-                                style={{ maxWidth: "100%", display: "block" }} 
-                                onLoad={() => setImageLoaded(true)} // ensure image is loaded before initializing Cropper
+                        {/* { !isLoading &&
+                            // <img 
+                            //     ref={imageRef} 
+                            //     src={uploadedImage} //#### to change to bg removed image from be
+                            //     alt="To Crop" 
+                            //     style={{ maxWidth: "100%", display: "block" }} 
+                            //     onLoad={() => setImageLoaded(true)} // ensure image is loaded before initializing Cropper
+                            // />
+
+                        } */}
+                    </div>
+
+                    <div className="flex">
+                        <MaskEditor
+                            src=""
+                            canvasRef={canvas}
+                            maskColor="#292c30"
+                            maskBlendMode="normal"
+                            cursorSize={5}
+                            maskOpacity={1}
                             />
-                        }
                     </div>
 
                 {/* Done Button */}
