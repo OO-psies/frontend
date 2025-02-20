@@ -9,7 +9,8 @@ Functionalities:
 */
 
 import React, { useState, useRef, useEffect } from "react";
-import { MaskEditor, toMask } from "react-mask-editor";
+// import { MaskEditor, toMask } from "react-mask-editor";
+import { MaskEditor } from "@/components/maskEditor"
 import "react-mask-editor/dist/style.css";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -43,6 +44,7 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
             // handleImageUpload();
         }
     }, [isOpen])
+
     
     // Helper F1 - Converts Image URL to Base64
     const convertToBase64 = async (image: string) => {    
@@ -100,6 +102,7 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
     // F1 - Calls HF1 HF2 (converts and sends to BE for touchup)
     const handleBgRemove = (() => {
         console.log(toMask(canvas.current))
+        console.log("uploadedImage", uploadedImage)
         console.log("Clicked button for retouchup")
         console.log(canvas.current); // Should log a valid canvas element
     })
@@ -108,25 +111,6 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
     const closeDialog = (() => {
         setIsOpen(false);
     })
-
-    // if (isLoading) {
-    //     return (
-    //         <>
-    //             <Dialog>
-    //                 <DialogTrigger asChild>
-    //                 </DialogTrigger>
-    //                 <DialogContent>
-    //                 <DialogHeader>
-    //                     <DialogTitle>Loading</DialogTitle>
-    //                     <DialogDescription className="pb-4">
-    //                         Loading
-    //                     </DialogDescription>
-    //                 </DialogHeader>
-    //                 </DialogContent>
-    //             </Dialog>
-    //         </>
-    //     )
-    // }
 
     return (
         <>
@@ -146,7 +130,7 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
                 </DialogDescription>
 
                 {/* Cropping Image */}
-                    <div className="flex mb-10">
+                    <div className="this flex mb-10" id="skelecont">
                         { isLoading &&
                             <Skeleton className="h-[400px] w-full"/>
                         }
@@ -162,14 +146,15 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
                         } */}
                     </div>
 
-                    <div className="flex">
+                    <div className="items-center"> 
                         <MaskEditor
-                            src=""
+                            src={uploadedImage}
                             canvasRef={canvas}
-                            maskColor="#292c30"
+                            maskColor="#000"
                             maskBlendMode="normal"
                             cursorSize={5}
                             maskOpacity={1}
+                            style={{ maxHeight: "100%", display: "block" }} 
                             />
                     </div>
 
