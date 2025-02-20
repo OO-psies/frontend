@@ -19,7 +19,7 @@ function App() {
 
     if (file) {
       const imageUrl = URL.createObjectURL(file);
-      setUploadedImage(imageUrl); // Store the image URL
+      setUploadedImage(imageUrl); 
       setCroppedImage(null); // Reset cropped image when new image is uploaded
       setBgRemovedImage(null); // Reset bg removed image when new image is uploaded
     } else {
@@ -29,10 +29,10 @@ function App() {
 
   const handleDownload = async () => {
     let fileName = prompt("Enter a name for the file")?.trim() || "edited_image";
-  
+
     // ensure filename remains exactly as inputted
-    fileName = fileName.replace(/[^a-zA-Z0-9-_]/g, ""); // remove special characters except - and _
-  
+    fileName = fileName.replace(/[^a-zA-Z0-9-_]/g, ""); 
+
     // prioritize downloading only edited images
     const imageToDownload = croppedImage || bgRemovedImage;
     if (!imageToDownload) {
@@ -40,23 +40,31 @@ function App() {
         return;
     }
 
-    // fetch the image to convert it into a Blob
+    // fetch the image to convert it into a blob
     const response = await fetch(imageToDownload);
     const blob = await response.blob();
 
-    // create an object URL for the Blob
-    const blobUrl = URL.createObjectURL(blob);
+    try {
+        // use file system access API to let user choose where to save the file
+        const fileHandle = await window.showSaveFilePicker({
+            suggestedName: `${fileName}.png`,
+            types: [
+                {
+                    description: "PNG Image",
+                    accept: { "image/png": [".png"] }
+                }
+            ]
+        });
 
-    // create a download link
-    const link = document.createElement("a");
-    link.href = blobUrl;
-    link.download = `${fileName}.png`; // ensures filename is exactly as user input
+        // create a writable stream and write the blob to the file
+        const writableStream = await fileHandle.createWritable();
+        await writableStream.write(blob);
+        await writableStream.close();
 
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-
-    URL.revokeObjectURL(blobUrl);
+        alert("File saved successfully!");
+    } catch (error) {
+        console.error("File save canceled or failed:", error);
+    }
 };
 
   return (
