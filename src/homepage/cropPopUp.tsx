@@ -9,11 +9,12 @@ import { Button } from "@/components/ui/button";
 import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
 
 interface CropPopUpProps {
-  uploadedImage: string;
+//   uploadedImage: string;
+  baseImage: string; // Use the original image
   setCroppedImage: (image: string | null) => void;
 }
 
-export default function CropPopUp({ uploadedImage, setCroppedImage }: CropPopUpProps) {
+export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const cropperRef = useRef<Cropper | null>(null);
@@ -147,13 +148,36 @@ export default function CropPopUp({ uploadedImage, setCroppedImage }: CropPopUpP
     setIsOpen(false);
 };
 
+  const handleRevert = () => {
+    if (!baseImage) return;
+
+    setSelectedCountry(null); // Reset country selection
+    setCroppedImage(baseImage); // Revert to the original image
+
+    if (cropperRef.current) {
+      cropperRef.current.destroy(); // Destroy current cropper instance
+      cropperRef.current = null;
+    }
+
+    setTimeout(() => {
+      if (imageRef.current) {
+        cropperRef.current = new Cropper(imageRef.current, {
+          autoCropArea: 1,
+          viewMode: 1,
+          dragMode: "crop",
+          responsive: true,
+          zoomable: true,
+          background: false,
+        });
+      }
+    }, 100); // Small delay to reinitialize Cropper
+  };
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button disabled={!uploadedImage} onClick={() => setIsOpen(true)}>
-            <Crop /> Crop & Resize
-          </Button>
+            <Button disabled={!baseImage || baseImage === null} onClick={() => setIsOpen(true)}><Crop /> Crop & Resize</Button>
         </DialogTrigger>
 
         <DialogContent>
@@ -168,7 +192,7 @@ export default function CropPopUp({ uploadedImage, setCroppedImage }: CropPopUpP
             <div>
               <img 
                 ref={imageRef} 
-                src={uploadedImage} 
+                src={baseImage} 
                 alt="To Crop" 
                 style={{ maxWidth: "100%", display: "block" }} 
                 onLoad={() => setImageLoaded(true)}
@@ -195,9 +219,13 @@ export default function CropPopUp({ uploadedImage, setCroppedImage }: CropPopUpP
 
             {/* Done Button */}
             <div className="flex justify-end mt-2">
+              <Button className="bg-red-500 hover:bg-red-400 mx-3" onClick={handleRevert}>
+                Revert
+              </Button>
               <Button onClick={handleCrop}>
                 Done
               </Button>
+              
             </div>
           </DialogHeader>
         </DialogContent>

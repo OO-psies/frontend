@@ -8,6 +8,7 @@ import BgRemoverPopUp from "./homepage/BgRemoverPopUp";
 
 
 function App() {
+  const [baseImage, setBaseImage] = useState<string | null>(null); // Stores the original image
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
   const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image  
@@ -19,6 +20,7 @@ function App() {
 
     if (file) {
       const imageUrl = URL.createObjectURL(file);
+      setBaseImage(imageUrl); // Store original image separately
       setUploadedImage(imageUrl); 
       setCroppedImage(null); // Reset cropped image when new image is uploaded
       setBgRemovedImage(null); // Reset bg removed image when new image is uploaded
@@ -34,11 +36,11 @@ function App() {
     fileName = fileName.replace(/[^a-zA-Z0-9-_]/g, ""); 
 
     // prioritize downloading only edited images
-    const imageToDownload = croppedImage || bgRemovedImage;
-    if (!imageToDownload) {
-        alert("No edited image available to download.");
-        return;
-    }
+    const imageToDownload = croppedImage || bgRemovedImage || uploadedImage || baseImage;
+      if (!imageToDownload) {
+          alert("No image available to download.");
+          return;
+      }
 
     // fetch the image to convert it into a blob
     const response = await fetch(imageToDownload);
@@ -80,13 +82,13 @@ function App() {
           {/* Upload Area (Initially Placeholder, Then Image) */}
           <div className="flex flex-col items-center">
             <div className="border border-gray-300 shadow-md rounded-md p-2 w-[350px] h-full flex items-center justify-center">
-              {uploadedImage ? (
-                <img
-                  src={uploadedImage}
-                  alt="Uploaded Preview"
-                  className="w-full h-full object-cover rounded-md"
-                />
-              ) : (
+            {baseImage ? (
+              <img 
+                src={croppedImage || uploadedImage || baseImage} 
+                alt="Processed Image" 
+                className="w-full h-full object-cover rounded-md" 
+              />
+            ) : (
                 <UploadArea
                   uploadedImage={uploadedImage}
                   onImageUpload={handleImageUpload}
@@ -101,40 +103,29 @@ function App() {
             )}
           </div>
 
-          {/* Cropped Image Preview (Only Show if Cropped Image Exists) */}
-          {croppedImage && (
-            <div className="flex flex-col items-center">
-              <div className="border border-gray-300 rounded-md p-2 shadow-md w-[350px] h-[420px] flex items-center justify-center">
-                <img
-                  src={croppedImage}
-                  alt="Cropped Preview"
-                  className="w-full h-full object-cover rounded-md"
-                />
-              </div>
-              <p className="text-gray-600 mt-2">Edited Image</p>
-            </div>
-          )}
         </div>
 
         {/* Button Options */}
         <div className="flex pt-8 space-x-4">
+
         {/* Cropper */}
-          <CropPopUp
-            uploadedImage={uploadedImage}
-            setCroppedImage={setCroppedImage} />
+        <CropPopUp baseImage={baseImage} setCroppedImage={(cropped) => {
+            setUploadedImage(cropped); // Update the displayed image
+            setCroppedImage(cropped);  // Store the cropped version separately
+          }}
+        />
+
         {/* Enhance */}
           <Button disabled={!uploadedImage}>
             <Wand2 />
             Enhance
           </Button>
+          
         {/* BG Remover */}
           <BgRemoverPopUp 
             uploadedImage={uploadedImage}
             setBgRemovedImage={setBgRemovedImage}/>
-          {/* <Button disabled={!uploadedImage}>
-            <ImageOff />
-            Remove Background
-          </Button> */}
+
         {/* Download */}
           <Button
             disabled={!uploadedImage}
