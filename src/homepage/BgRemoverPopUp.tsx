@@ -11,9 +11,12 @@ Functionalities:
 import React, { useState, useRef, useEffect } from "react";
 // import { MaskEditor, toMask } from "react-mask-editor";
 import { MaskEditor } from "@/components/maskEditor"
+import { toMask } from "@/components/utils"
 import "react-mask-editor/dist/style.css";
+import TestingMask from "@/components/testingMark";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton"
 import { Crop, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,9 +31,13 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
     const [isLoading, setIsLoading] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false); 
     const [bgRemovedImage, loadBgRemovedImage] = useState<string>(''); 
-
     const imageRef = useRef<HTMLImageElement | null>(null);
     const canvas = useRef<HTMLCanvasElement>();
+    const [cursorSize, setCursorSize] = React.useState(10); // Default brush size
+
+    const handleCursorSizeChange = (newSize: number) => {
+      setCursorSize(newSize); // Update cursor size state
+    };
 
     useEffect(() => {
         console.log(canvas.current); // Should log a valid canvas element
@@ -101,10 +108,7 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
 
     // F1 - Calls HF1 HF2 (converts and sends to BE for touchup)
     const handleBgRemove = (() => {
-        console.log(toMask(canvas.current))
-        console.log("uploadedImage", uploadedImage)
-        console.log("Clicked button for retouchup")
-        console.log(canvas.current); // Should log a valid canvas element
+        console.log("Mask >>>", toMask(canvas.current))
     })
 
     // F2 - Closes Dialog
@@ -130,7 +134,7 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
                 </DialogDescription>
 
                 {/* Cropping Image */}
-                    <div className="this flex mb-10" id="skelecont">
+                    <div className="this flex mb-10">
                         { isLoading &&
                             <Skeleton className="h-[400px] w-full"/>
                         }
@@ -146,16 +150,17 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
                         } */}
                     </div>
 
-                    <div className="items-center"> 
+                    <div className="items-center min-h-400"> 
                         <MaskEditor
                             src={uploadedImage}
                             canvasRef={canvas}
-                            maskColor="#000"
+                            maskColor="#23272d"
                             maskBlendMode="normal"
-                            cursorSize={5}
-                            maskOpacity={1}
                             style={{ maxHeight: "100%", display: "block" }} 
                             />
+                            {/* <TestingMask
+                                src={uploadedImage}
+                            /> */}
                     </div>
 
                 {/* Done Button */}
