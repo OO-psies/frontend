@@ -5,6 +5,7 @@ import { UploadArea } from "./homepage/UploadArea";
 import { Wand2, ImageOff, Download } from "lucide-react";
 import CropPopUp from "./homepage/cropPopUp";
 import BgRemoverPopUp from "./homepage/BgRemoverPopUp";
+import BgColourPopUp from "./homepage/BgColourPopUp";
 
 
 function App() {
@@ -23,7 +24,7 @@ function App() {
       setBaseImage(imageUrl); // Store original image separately
       setUploadedImage(imageUrl); 
       setCroppedImage(null); // Reset cropped image when new image is uploaded
-      setBgRemovedImage(null); // Reset bg removed image when new image is uploaded
+      setBgRemovedImage(imageUrl); // Reset bg removed image when new image is uploaded
     } else {
       setUploadedImage(null);
     }
@@ -81,7 +82,7 @@ function App() {
         <div className="flex flex-row space-x-8">
           {/* Upload Area (Initially Placeholder, Then Image) */}
           <div className="flex flex-col items-center">
-            <div className="border border-gray-300 shadow-md rounded-md p-2 w-[350px] h-full flex items-center justify-center">
+            <div className="border border-gray-300 shadow-md rounded-md p-2 w-[350px] h-full flex items-center justify-center image-container">
             {baseImage ? (
               <img 
                 src={croppedImage || uploadedImage || baseImage} 
@@ -115,17 +116,35 @@ function App() {
           }}
         />
 
-        {/* Enhance */}
-          <Button disabled={!uploadedImage}>
-            <Wand2 />
-            Enhance
+       
+
+          {/* 
+          <Button 
+            disabled={!uploadedImage}
+            onClick={() => {
+              const color = prompt("Enter background color (e.g., #FF5733 or blue):", "#ffffff");
+              if (color) {
+                const imageContainer = document.querySelector('.image-container');
+                if (imageContainer) {
+                  imageContainer.style.backgroundColor = color;
+                }
+              }
+            }}
+          >
+            <ImageOff />
+            Change BG Color
           </Button>
-          
+           */}
         {/* BG Remover */}
           <BgRemoverPopUp 
             uploadedImage={uploadedImage}
             setBgRemovedImage={setBgRemovedImage}/>
 
+        {/* Enhance */}
+          <BgColourPopUp 
+            uploadedImage={uploadedImage}
+            setUploadedImage={setUploadedImage}
+          />  
         {/* Download */}
           <Button
             disabled={!uploadedImage}
