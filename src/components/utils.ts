@@ -1,5 +1,7 @@
-export const toMask = (canvas: HTMLCanvasElement) => {
+export const toMask = (canvas: any) => {
   const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
   const size = {
     x: canvas.width,
     y: canvas.height,
@@ -8,25 +10,6 @@ export const toMask = (canvas: HTMLCanvasElement) => {
   const imageData = ctx?.getImageData(0, 0, size.x, size.y);
   const origData = Uint8ClampedArray.from(imageData.data);
 
-  // the commented out chunk here only works when the maskcontext was set to ffffff
-  // if (imageData) {
-  //   for (var i = 0; i < imageData.data.length; i += 4) {
-  //     const isBlack =
-  //       imageData.data[i] === 0 &&
-  //       imageData.data[i + 1] === 0 &&
-  //       imageData.data[i + 2] === 0;
-
-  //     const pixelColor = isBlack ? [0, 0, 0] : [255, 255, 255];
-
-  //     imageData.data[i] = pixelColor[0];     // Red
-  //     imageData.data[i + 1] = pixelColor[1]; // Green
-  //     imageData.data[i + 2] = pixelColor[2]; // Blue
-  //     imageData.data[i + 3] = 255;           // Alpha (fully opaque)
-  //   }
-  //   ctx?.putImageData(imageData, 0, 0);
-  // }
-
-   // this chunk also only works when the maskcontext was set to ffffff, but the bw image output is inversed
   if (imageData) {
     for (var i = 0; i < imageData?.data.length; i += 4) {
       const pixelColor = (imageData.data[i] === 255) ? [0, 0, 0] : [255, 255, 255];
@@ -46,6 +29,52 @@ export const toMask = (canvas: HTMLCanvasElement) => {
 
   return dataUrl;
 }
+
+export const toStrokeMask = (canvas: any) => {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const width = canvas.width;
+  const height = canvas.height;
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];      // Red channel
+    const g = data[i + 1];  // Green channel
+    const b = data[i + 2];  // Blue channel
+
+    // Convert Yellow (255, 255, 0) strokes to Black (0,0,0)
+    if (r === 255 && g === 255 && b === 0) {
+      data[i] = 0;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+    }
+
+    // Convert Purple (128, 0, 128) strokes to White (255,255,255)
+    else if (r === 128 && g === 0 && b === 128) {
+      data[i] = 255;
+      data[i + 1] = 255;
+      data[i + 2] = 255;
+    }
+    // Set the background to Red (255, 0, 0)
+    else {
+      data[i] = 255;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+    }
+
+    if (data[i + 3] === 0) {
+      data[i] = 255;
+      data[i + 1] = 0;
+      data[i + 2] = 0;
+      data[i + 3] = 255; // Make it fully opaque
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+  return canvas.toDataURL();
+};
 
 export const hexToRgb = (color: string) => {
   var parts = color.replace("#", "").match(/.{1,2}/g);

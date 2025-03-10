@@ -4,7 +4,9 @@ import { hexToRgb, toMask } from "./utils";
 
 export interface MaskEditorProps {
   src: string;
+  maskSrc: string; // testing mask
   canvasRef?: React.MutableRefObject<HTMLCanvasElement>;
+  strokeCanvasRef?: React.MutableRefObject<HTMLCanvasElement>;
   cursorSize?: number;
   onCursorSizeChange?: (size: number) => void;
   maskOpacity?: number;
@@ -21,26 +23,69 @@ export const MaskEditorDefaults = {
 
 export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) => {
   const src = props.src;
+  const maskSrc = props.maskSrc
   const cursorSize = props.cursorSize ?? MaskEditorDefaults.cursorSize;
   const maskColor = props.maskColor ?? MaskEditorDefaults.maskColor;
   const maskBlendMode = props.maskBlendMode ?? MaskEditorDefaults.maskBlendMode;
   const maskOpacity = props.maskOpacity ?? MaskEditorDefaults.maskOpacity;
 
+  // (1)
   const canvas = React.useRef<HTMLCanvasElement|null>(null);
-  const maskCanvas = React.useRef<HTMLCanvasElement|null>(null);
-  const cursorCanvas = React.useRef<HTMLCanvasElement|null>(null);
   const [context, setContext] = React.useState<CanvasRenderingContext2D|null>(null);
+
+  // (2)
+  const maskCanvas = React.useRef<HTMLCanvasElement|null>(null);
   const [maskContext, setMaskContext] = React.useState<CanvasRenderingContext2D|null>(null);
+
+  // (3)
+  const cursorCanvas = React.useRef<HTMLCanvasElement|null>(null);
   const [cursorContext, setCursorContext] = React.useState<CanvasRenderingContext2D|null>(null);
+
+  // (4)
+  const strokeMaskCanvas = React.useRef<HTMLCanvasElement | null>(null);
+  const [strokeMaskContext, setStrokeMaskContext] = React.useState<CanvasRenderingContext2D | null>(null);
+
   const [size, setSize] = React.useState<{x: number, y: number}>({x: 256, y: 256})
 
+  // (2b2) load maskContext with mask outline
   React.useLayoutEffect(() => {
     if (maskContext) {
-      maskContext.fillStyle = "#ff3838"; // best non white (#ffffff) for toMask ("#fa7878" traces)
+      maskContext.fillStyle = "#000000"; // best non white (#ffffff) for toMask ("#fa7878" traces)
       maskContext.fillRect(0, 0, size.x, size.y);
-  }
-  }, [maskContext, maskCanvas, size]); //setting size as the dependency to trigger load
 
+      const img = new Image;
+      img.src = maskSrc;
+
+        img.onload = () => {
+          maskContext.drawImage(img, 0, 0, size.x, size.y); // Draw image
+    
+          const imageData = maskContext.getImageData(0, 0, size.x, size.y);
+          const data = imageData.data;
+
+          for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];      // Red
+            const g = data[i + 1];  // Green
+            const b = data[i + 2];  // Blue
+    
+            if (r === 0 && g === 0 && b === 0) {
+              // If pixel is black, turn it red
+              data[i] = 255;     // Red
+              data[i + 1] = 56;  // Green
+              data[i + 2] = 56;  // Blue
+              data[i + 3] = 255; // Keep full opacity
+            } else if (r === 255 && g === 255 && b === 255) {
+              // If pixel is white, make it transparent
+              data[i + 3] = 0; // Set alpha to 0 (fully transparent)
+            }
+          }
+    
+          // Put modified image data back to canvas
+          maskContext.putImageData(imageData, 0, 0);
+      }
+  }
+}, [maskContext, strokeMaskContext, maskCanvas, size]); 
+
+  // (1b) creates/stores context
   React.useLayoutEffect(() => {
     if (canvas.current && !context) {
       const ctx = (canvas.current as HTMLCanvasElement).getContext("2d");
@@ -48,6 +93,7 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
     }
   }, [canvas]);
 
+  // (1b2) set image on context as bg
   React.useEffect(() => {
     if (src && context) {
       const img = new Image;
@@ -59,8 +105,8 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
       const adjustedHeight = 500;
       const adjustedWidth = Math.round(naturalWidth / (naturalHeight/adjustedHeight));
 
-      img.height = adjustedHeight; // i am trying to set the height of the actual img
-      img.width = adjustedWidth; // i am trying to set the height of the actual img
+      img.height = adjustedHeight; 
+      img.width = adjustedWidth; 
 
       setSize({x: adjustedWidth, y: adjustedHeight});
 
@@ -70,11 +116,11 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
     }
   }, [src, context]);
 
+  // (2b) creates/stores maskContext
   React.useLayoutEffect(() => {
     if (maskCanvas.current && !context) {
       const ctx = (maskCanvas.current as HTMLCanvasElement).getContext("2d");
       if (ctx) {
-        // ctx.fillStyle = "#ffffff";
         ctx.fillStyle = "#000000";
         ctx.fillRect(0, 0, size.x, size.y);
       }
@@ -82,6 +128,19 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
     }
   }, [maskCanvas]);
 
+  // (4b) creates/stores strokeMaskContext
+  React.useLayoutEffect(() => {
+    if (strokeMaskCanvas.current && !context) {
+      const ctx = strokeMaskCanvas.current.getContext("2d");
+      if (ctx) {
+        ctx.fillStyle = "red"; // Full red background
+        ctx.fillRect(0, 0, size.x, size.y);
+      }
+      setStrokeMaskContext(ctx);
+    }
+  }, [strokeMaskCanvas]);
+
+  // (3) creates/sets cursorContext
   React.useLayoutEffect(() => {
     if (cursorCanvas.current && !context) {
       const ctx = (cursorCanvas.current as HTMLCanvasElement).getContext("2d");
@@ -89,14 +148,19 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
     }
   }, [cursorCanvas]);
 
-  // Pass mask canvas up
+  // >>> Loads mask canvas for export/use by parent
   React.useLayoutEffect(() => {
     if (props.canvasRef && maskCanvas.current) {
       props.canvasRef.current = maskCanvas.current;
     }
-  }, [maskCanvas]);
+    if (props.strokeCanvasRef && strokeMaskCanvas.current) {
+      props.strokeCanvasRef.current = strokeMaskCanvas.current
+    } else {
+      console.log("is there strokeMaskCanvas >>>", strokeMaskCanvas.current)
+    }
+  }, [maskCanvas, strokeMaskCanvas]);
 
-  // paints the brush mask (3rd top most layer)
+  // paints the maskContext which affects maskCanvas for returning, as well as strokeMaskCanvas and context
   React.useEffect(() => {
     const listener = (evt: MouseEvent) => {
       // for viewing the brush
@@ -110,26 +174,30 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
         cursorContext.fill();
         cursorContext.stroke();
       }
-      // for actually brushing (on the canvas)
-      if (maskContext && evt.buttons > 0) {
-        // maskContext.beginPath();
-        // maskContext.fillStyle = (evt.buttons > 1 || evt.shiftKey) ? "#ffffff" : maskColor;
-        // maskContext.arc(evt.offsetX, evt.offsetY, cursorSize, 0, 360);
-        // maskContext.fill();
 
+      let strokeColor = evt.shiftKey ? "#FFFF00" : "#800080"; // Yellow or Purple
+
+      // for actually brushing (on the canvas)
+      if (maskContext && strokeMaskContext && evt.buttons > 0) {
+        //for immediate rendering
         maskContext.globalCompositeOperation = (evt.buttons > 1 || evt.shiftKey) 
         ? "source-over"  // Paint with color (mask)
         : "destination-out"; // Erase (make transparent)
-    
-      maskContext.beginPath();
-      maskContext.fillStyle = (evt.buttons > 1 || evt.shiftKey) ? "#ff3838" : maskColor;
-      maskContext.arc(evt.offsetX, evt.offsetY, cursorSize, 0, 360);
-      maskContext.fill();
-    
-      // Reset composite operation to normal after drawing
-      maskContext.globalCompositeOperation = "source-over";
+        maskContext.beginPath();
+        maskContext.fillStyle = (evt.buttons > 1 || evt.shiftKey) ? "#ff3838" : maskColor;
+        maskContext.arc(evt.offsetX, evt.offsetY, cursorSize, 0, 360);
+        maskContext.fill();
+        // Reset composite operation to normal after drawing
+        maskContext.globalCompositeOperation = "source-over";
+
+        // Draw stroke but don't render it (only store data)
+        strokeMaskContext.beginPath();
+        strokeMaskContext.fillStyle = strokeColor;
+        strokeMaskContext.arc(evt.offsetX, evt.offsetY, cursorSize, 0, 360);
+        strokeMaskContext.fill();
       }
-    }
+    };
+
     const scrollListener = (evt: WheelEvent) => {
       if (cursorContext) {
         props.onCursorSizeChange(Math.max(0, cursorSize + (evt.deltaY > 0 ? 1 : -1)));
@@ -158,7 +226,7 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
         cursorCanvas.current?.removeEventListener("wheel", scrollListener);
       }
     }
-  }, [cursorContext, maskContext, cursorCanvas, cursorSize, maskColor, size]);
+  }, [cursorContext, maskContext, strokeMaskContext, cursorCanvas, cursorSize, maskColor, size]);
 
   const replaceMaskColor = React.useCallback((hexColor: string, invert: boolean) => {
     const imageData = maskContext?.getImageData(0, 0, size.x, size.y);
@@ -166,7 +234,7 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
 
     if (imageData) {
       for (var i = 0; i < imageData?.data.length; i += 4) {
-        const pixelColor = ((imageData.data[i] === 255) != invert) ? color : [255, 255, 255] ;
+        const pixelColor = ((imageData.data[i] === 255) != invert) ? color : [255, 0, 0] ;
         imageData.data[i] = pixelColor[0];
         imageData.data[i + 1] = pixelColor[1];
         imageData.data[i + 2] = pixelColor[2];
@@ -195,7 +263,7 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
         className="react-mask-editor-base-canvas"
       />
 
-      {/* white mask - above image */}
+      {/* overlay mask - above image */}
       <canvas
         ref={maskCanvas}
         width={size.x}
@@ -208,6 +276,12 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
         }}
         className="react-mask-editor-mask-canvas"
       />
+
+      <canvas ref={strokeMaskCanvas} 
+      width={size.x}
+      height={size.y}
+      style={{ visibility: "hidden" }} 
+       />
 
       {/* brush mask - above white mask */}
       <canvas

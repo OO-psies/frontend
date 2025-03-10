@@ -1,38 +1,28 @@
-/*
-Functionalities:
-1. accept image (from cropped or from uploads)
-2. sends image to be for removal (req)
-3. fetches bg removed image + mask from be (res)
-4. shows image and mask over image
-5. use interactivity with mask
-6. sends pixel radius to be
-*/
-
 import React, { useState, useRef, useEffect } from "react";
 // import { MaskEditor, toMask } from "react-mask-editor";
 import { MaskEditor } from "@/components/maskEditor"
-import { toMask } from "@/components/utils"
+import { toMask, toStrokeMask } from "@/components/utils"
 import "react-mask-editor/dist/style.css";
-import TestingMask from "@/components/testingMark";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton"
 import { Crop, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface BgRemoverPopUpProps {
-    uploadedImage: string; //from app.tsx
+    uploadedImage: string | null; //from app.tsx
+    uploadedMask: string | null;
     setBgRemovedImage: (image: string | null) => void; // from 
   }
 
-export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgRemoverPopUpProps){
+export default function BgRemoverPopUp({ uploadedImage, uploadedMask, setBgRemovedImage }: BgRemoverPopUpProps){
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false); 
     const [bgRemovedImage, loadBgRemovedImage] = useState<string>(''); 
     const imageRef = useRef<HTMLImageElement | null>(null);
     const canvas = useRef<HTMLCanvasElement>();
+    const strokeCanvas = useRef<HTMLCanvasElement>();
     const [cursorSize, setCursorSize] = React.useState(10); // Default brush size
 
     const handleCursorSizeChange = (newSize: number) => {
@@ -80,7 +70,7 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
         const base64Image = await convertToBase64(uploadedImage);
         try {
         const response = await fetch(
-            "https://photoid.onrender.com/api/grabcut",
+            "localhost:8080/api/edit-image/background-removal",
             {
             method: "POST",
             headers: {
@@ -108,7 +98,8 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
 
     // F1 - Calls HF1 HF2 (converts and sends to BE for touchup)
     const handleBgRemove = (() => {
-        console.log("Mask >>>", toMask(canvas.current))
+        console.log("Mask >>>", toMask(canvas.current));
+        console.log("Just the strokes >>>", toStrokeMask(strokeCanvas.current));
     })
 
     // F2 - Closes Dialog
@@ -153,14 +144,13 @@ export default function BgRemoverPopUp({ uploadedImage, setBgRemovedImage }: BgR
                     <div className="items-center min-h-400"> 
                         <MaskEditor
                             src={uploadedImage}
+                            maskSrc={uploadedMask}
                             canvasRef={canvas}
+                            strokeCanvasRef={strokeCanvas}
                             maskColor="#23272d"
                             maskBlendMode="normal"
                             style={{ maxHeight: "100%", display: "block" }} 
                             />
-                            {/* <TestingMask
-                                src={uploadedImage}
-                            /> */}
                     </div>
 
                 {/* Done Button */}

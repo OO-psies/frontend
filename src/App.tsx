@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import "./App.css";
 import { UploadArea } from "./homepage/UploadArea";
@@ -10,8 +10,11 @@ import BgRemoverPopUp from "./homepage/BgRemoverPopUp";
 function App() {
   const [baseImage, setBaseImage] = useState<string | null>(null); // Stores the original image
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [maskImage, setMaskImage] = useState<string | null>(null); // !!! testing
   const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
-  const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image  
+  const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image 
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+ 
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -26,6 +29,23 @@ function App() {
       setBgRemovedImage(null); // Reset bg removed image when new image is uploaded
     } else {
       setUploadedImage(null);
+    }
+  };
+
+
+  // !!!for testing mask
+  const handleButtonClick = () => {
+    fileInputRef.current?.click(); // Triggers the file input when button is clicked
+  };
+  const handleMaskUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      console.log("imageURL", imageUrl)
+      setMaskImage(imageUrl); 
     }
   };
 
@@ -93,7 +113,6 @@ function App() {
                   uploadedImage={uploadedImage}
                   onImageUpload={handleImageUpload}
                 />
-               
               )}
             </div>
             
@@ -115,6 +134,24 @@ function App() {
           }}
         />
 
+        {/* TEST */}
+        <>
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleMaskUpload}
+            style={{ display: "none" }} // Hide the file input
+          />
+          <Button disabled={!uploadedImage} onClick={handleButtonClick}>
+            Upload Mask
+          </Button>
+        </>
+
+        <Button disabled={!uploadedImage} onClick={() => console.log(maskImage)}>
+            Check Mask
+          </Button>
+
         {/* Enhance */}
           <Button disabled={!uploadedImage}>
             <Wand2 />
@@ -124,6 +161,7 @@ function App() {
         {/* BG Remover */}
           <BgRemoverPopUp 
             uploadedImage={uploadedImage}
+            uploadedMask={maskImage}
             setBgRemovedImage={setBgRemovedImage}/>
 
         {/* Download */}
