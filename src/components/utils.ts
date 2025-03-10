@@ -62,12 +62,6 @@ export const toStrokeMask = (canvas: any) => {
       data[i] = 255;
       data[i + 1] = 0;
       data[i + 2] = 0;
-    }
-
-    if (data[i + 3] === 0) {
-      data[i] = 255;
-      data[i + 1] = 0;
-      data[i + 2] = 0;
       data[i + 3] = 255; // Make it fully opaque
     }
   }
