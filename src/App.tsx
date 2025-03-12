@@ -4,6 +4,7 @@ import "./App.css";
 import { UploadArea } from "./homepage/UploadArea";
 import { Wand2, ImageOff, Download } from "lucide-react";
 import CropPopUp from "./homepage/cropPopUp";
+import Enhance from "./homepage/Enhance";
 import BgRemoverPopUp from "./homepage/BgRemoverPopUp";
 
 
@@ -134,6 +135,12 @@ function App() {
           }}
         />
 
+        <Enhance baseImage={baseImage} setEnhanceImage={(enhanced) => {
+            setUploadedImage(enhanced); // Update the displayed image
+            setCroppedImage(enhanced);  // Store the cropped version separately
+          }}
+        />
+
         {/* TEST */}
         <>
           <input
@@ -143,6 +150,7 @@ function App() {
             onChange={handleMaskUpload}
             style={{ display: "none" }} // Hide the file input
           />
+
           <Button disabled={!uploadedImage} onClick={handleButtonClick}>
             Upload Mask
           </Button>
@@ -152,12 +160,7 @@ function App() {
             Check Mask
           </Button>
 
-        {/* Enhance */}
-          <Button disabled={!uploadedImage}>
-            <Wand2 />
-            Enhance
-          </Button>
-          
+        
         {/* BG Remover */}
           <BgRemoverPopUp 
             uploadedImage={uploadedImage}
