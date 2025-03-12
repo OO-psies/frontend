@@ -13,16 +13,16 @@ export default function Enhance({ baseImage, setEnhancedImage }: EnhanceProps) {
   const imageRef = useRef<HTMLImageElement | null>(null);
   const [selectedFilter, setSelectedFilter] = useState<string>("none");
 
-  // Filters with fixed preview sizes
+  // Flattering portrait filters
   const filters = [
     { name: "None", value: "none" },
-    { name: "Grayscale", value: "grayscale(100%)" },
-    { name: "Sepia", value: "sepia(100%)" },
-    { name: "Bright", value: "brightness(150%)" },
-    { name: "Contrast", value: "contrast(200%)" },
-    { name: "Saturate", value: "saturate(200%)" },
-    { name: "Invert", value: "invert(100%)" },
-    { name: "Hue Shift", value: "hue-rotate(90deg)" },
+    { name: "Soft Glow", value: "brightness(110%) contrast(95%) blur(1px)" },
+    { name: "Warm Tone", value: "sepia(30%) brightness(105%)" },
+    { name: "Cool Tone", value: "hue-rotate(200deg) brightness(110%) contrast(90%)" },
+    { name: "Vibrant Boost", value: "saturate(130%) contrast(105%) brightness(105%)" },
+    { name: "Smooth Skin", value: "brightness(108%) contrast(90%) blur(0.5px)" },
+    { name: "Cinematic", value: "contrast(120%) brightness(95%) sepia(10%)" },
+    { name: "Matte", value: "contrast(90%) brightness(105%) saturate(90%)" },
   ];
 
   const handleEnhance = () => {
