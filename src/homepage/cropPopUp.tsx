@@ -71,6 +71,17 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
     }
   };
 
+  const handleAspectRatioChange = (ratio: string) => {
+    let newRatio: number | null = null;
+    if (ratio !== "free") {
+      newRatio = parseFloat(ratio);
+    }
+    setAspectRatio(newRatio);
+    if (cropperRef.current) {
+      cropperRef.current.setAspectRatio(newRatio || NaN);
+    }
+  };
+
   const handleZoomChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newZoom = parseFloat(event.target.value);
     setZoomLevel(newZoom);
@@ -158,26 +169,43 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
               />
             </div>
 
-            {/* Country Selection */}
-            <div className="mt-4">
-              <Select onValueChange={handleCountryChange}>
-                <SelectTrigger className="w-[180px] mt-4">
-                  <div className="flex items-center space-x-2">
-                    <Globe className="w-5 h-5 text-gray-500" />
-                    <SelectValue placeholder="Country" />
-                  </div>
-                </SelectTrigger>
-
-                <SelectContent>
-                  {Object.keys(IDSizeByCountry).map((country) => (
-                    <SelectItem key={country} value={country}>
-                      {country}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex gap-3">
+              {/* Country Selection */}
+              <div className="mt-4">
+                <Select onValueChange={handleCountryChange}>
+                  <SelectTrigger className="w-[180px]">
+                    <div className="flex items-center space-x-2">
+                      <Globe className="w-5 h-5 text-gray-500" />
+                      <SelectValue placeholder="Country" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(IDSizeByCountry).map((country) => (
+                      <SelectItem key={country} value={country}>
+                        {country}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* handle aspect ratio */}
+              <div className="mt-4">
+                <Select onValueChange={handleAspectRatioChange}>
+                  <SelectTrigger className="w-[180px]">
+                    <div className="flex items-center space-x-2">
+                      <SelectValue placeholder="Aspect Ratio" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1:1 (Square)</SelectItem>
+                    <SelectItem value="1.7778">16:9 (Widescreen)</SelectItem>
+                    <SelectItem value="1.3333">4:3 (Standard)</SelectItem>
+                    <SelectItem value="free">Freeform</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            
 
             {/* Zoom Slider */}
             <div className="mt-4 flex items-center">
