@@ -22,6 +22,7 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
   const [scaleX, setScaleX] = useState(1);
   const [scaleY, setScaleY] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -30,6 +31,7 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
       setZoomLevel(1);
       setScaleX(1);
       setScaleY(1);
+      setAspectRatio(null)
     }
   }, [isOpen]);
 
@@ -47,6 +49,7 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
         responsive: true,
         zoomable: true,
         background: false,
+        aspectRatio: aspectRatio || NaN,
       });
 
       console.log("Cropper initialized.");
@@ -199,8 +202,8 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="1">1:1 (Square)</SelectItem>
-                    <SelectItem value="1.7778">16:9 (Widescreen)</SelectItem>
-                    <SelectItem value="1.3333">4:3 (Standard)</SelectItem>
+                    <SelectItem value="0.5625">9:16 (Widescreen)</SelectItem>
+                    <SelectItem value="0.75">3:4 (Standard)</SelectItem>
                     <SelectItem value="free">Freeform</SelectItem>
                   </SelectContent>
                 </Select>
