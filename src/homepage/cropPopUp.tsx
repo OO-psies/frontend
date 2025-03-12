@@ -4,13 +4,12 @@ import "cropperjs/dist/cropper.css";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Crop, Globe } from "lucide-react";
+import { Crop, Globe, FlipHorizontal, FlipVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
 
 interface CropPopUpProps {
-//   uploadedImage: string;
-  baseImage: string; // Use the original image
+  baseImage: string;
   setCroppedImage: (image: string | null) => void;
 }
 
@@ -20,11 +19,17 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
   const cropperRef = useRef<Cropper | null>(null);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [scaleX, setScaleX] = useState(1);
+  const [scaleY, setScaleY] = useState(1);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   useEffect(() => {
     if (!isOpen) {
       setImageLoaded(false);
-      setSelectedCountry(null); // Reset country selection when modal closes
+      setSelectedCountry(null);
+      setZoomLevel(1);
+      setScaleX(1);
+      setScaleY(1);
     }
   }, [isOpen]);
 
@@ -53,7 +58,6 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
     };
   }, [isOpen, imageLoaded]);
 
-  // auto-crop function when a country is selected
   const handleCountryChange = (country: string) => {
     setSelectedCountry(country);
   
@@ -62,130 +66,85 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
     const dimensions = IDSizeByCountry[country as keyof typeof IDSizeByCountry];
     if (dimensions) {
       console.log(`Auto-cropping to ${dimensions.width}x${dimensions.height} ${dimensions.unit}`);
-  
-      // calculate aspect ratio
       const aspectRatio = dimensions.width / dimensions.height;
-  
-      // get image container size
-      const imageElement = imageRef.current;
-      if (!imageElement) return;
-  
-      const imageWidth = imageElement.clientWidth;
-      const imageHeight = imageElement.clientHeight;
-  
-      // determine maximum possible crop area while maintaining aspect ratio
-      let cropWidth = imageWidth * 0.7; // Make crop area 70% of image width
-      let cropHeight = cropWidth / aspectRatio;
-  
-      if (cropHeight > imageHeight * 0.7) {
-        cropHeight = imageHeight * 0.7;
-        cropWidth = cropHeight * aspectRatio;
-      }
-  
-      // set the new crop box size centered
-      cropperRef.current.setCropBoxData({
-        left: (imageWidth - cropWidth) / 2,
-        top: (imageHeight - cropHeight) / 2,
-        width: cropWidth,
-        height: cropHeight,
-      });
-  
-      cropperRef.current.setAspectRatio(aspectRatio); // lock aspect ratio
+      cropperRef.current.setAspectRatio(aspectRatio);
+    }
+  };
+
+  const handleZoomChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newZoom = parseFloat(event.target.value);
+    setZoomLevel(newZoom);
+    if (cropperRef.current) {
+      cropperRef.current.zoomTo(newZoom);
+    }
+  };
+
+  const handleScaleXChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newScaleX = parseFloat(event.target.value);
+    setScaleX(newScaleX);
+    if (cropperRef.current) {
+      cropperRef.current.scaleX(newScaleX);
+    }
+  };
+
+  const handleScaleYChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newScaleY = parseFloat(event.target.value);
+    setScaleY(newScaleY);
+    if (cropperRef.current) {
+      cropperRef.current.scaleY(newScaleY);
+    }
+  };
+
+  const handleFlipHorizontal = () => {
+    setScaleX((prev) => -prev); // Toggle between 1 and -1
+    if (cropperRef.current) {
+      cropperRef.current.scaleX(-scaleX);
+    }
+  };
+
+  const handleFlipVertical = () => {
+    setScaleY((prev) => -prev); // Toggle between 1 and -1
+    if (cropperRef.current) {
+      cropperRef.current.scaleY(-scaleY);
     }
   };
 
   const handleCrop = () => {
     if (!cropperRef.current) return;
 
-    let canvas;
-    const imageElement = imageRef.current;
-    if (!imageElement) return;
-
-    if (selectedCountry) {
-        const dimensions = IDSizeByCountry[selectedCountry as keyof typeof IDSizeByCountry];
-        if (dimensions) {
-            console.log(`Auto-cropping to ${dimensions.width}x${dimensions.height} ${dimensions.unit}`);
-
-            // Ensure we maintain the original image resolution by using its natural size
-            const aspectRatio = dimensions.width / dimensions.height;
-            const originalWidth = imageElement.naturalWidth;
-            const originalHeight = imageElement.naturalHeight;
-
-            let newWidth = originalWidth;
-            let newHeight = newWidth / aspectRatio;
-
-            if (newHeight > originalHeight) {
-                newHeight = originalHeight;
-                newWidth = newHeight * aspectRatio;
-            }
-
-            canvas = cropperRef.current.getCroppedCanvas({
-                width: newWidth,
-                height: newHeight,
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: "high"
-            });
-        } else {
-            console.log("No dimensions found for the selected country.");
-            return;
-        }
-    } else {
-        console.log("Manual cropping using current selection.");
-        canvas = cropperRef.current.getCroppedCanvas();
-    }
+    let canvas = cropperRef.current.getCroppedCanvas({
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: "high"
+    });
 
     if (canvas) {
-        // convert canvas to Blob for better quality
-        canvas.toBlob((blob) => {
-            if (blob) {
-                const blobUrl = URL.createObjectURL(blob);
-                console.log("Cropped Image Blob URL:", blobUrl);
-                setCroppedImage(blobUrl);
-            }
-        }, "image/png", 1.0); // ensures no quality loss
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const blobUrl = URL.createObjectURL(blob);
+          console.log("Cropped Image Blob URL:", blobUrl);
+          setCroppedImage(blobUrl);
+        }
+      }, "image/png", 1.0);
     }
 
     setIsOpen(false);
-};
-
-  const handleRevert = () => {
-    if (!baseImage) return;
-
-    setSelectedCountry(null); // Reset country selection
-    setCroppedImage(baseImage); // Revert to the original image
-
-    if (cropperRef.current) {
-      cropperRef.current.destroy(); // Destroy current cropper instance
-      cropperRef.current = null;
-    }
-
-    setTimeout(() => {
-      if (imageRef.current) {
-        cropperRef.current = new Cropper(imageRef.current, {
-          autoCropArea: 1,
-          viewMode: 1,
-          dragMode: "crop",
-          responsive: true,
-          zoomable: true,
-          background: false,
-        });
-      }
-    }, 100); // Small delay to reinitialize Cropper
   };
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-            <Button disabled={!baseImage || baseImage === null} onClick={() => setIsOpen(true)}><Crop /> Crop & Resize</Button>
+          <Button disabled={!baseImage || baseImage === null} onClick={() => setIsOpen(true)}>
+            <Crop /> Crop & Resize
+          </Button>
         </DialogTrigger>
 
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>How would you like to crop and resize your photo?</DialogTitle>
+            <DialogTitle>Adjust & Crop Your Image</DialogTitle>
             <DialogDescription className="pb-4">
-              Manually Crop By Dragging The Corners. Use two fingers for zooming.<br />
-              Or Select A Country For Auto-Crop
+              Use the sliders to zoom, stretch, or flip your image.<br />
+              Or Select A Country for Auto-Cropping
             </DialogDescription>
 
             {/* Cropping Image */}
@@ -199,33 +158,88 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
               />
             </div>
 
-            {/* Country selection for Auto-Cropping */}
-            <Select onValueChange={handleCountryChange}>
-              <SelectTrigger className="w-[180px]">
-                <div className="flex items-center space-x-2">
-                  <Globe className="w-5 h-5 text-gray-500" />
-                  <SelectValue placeholder="Country" />
-                </div>
-              </SelectTrigger>
+            {/* Country Selection */}
+            <div className="mt-4">
+              <Select onValueChange={handleCountryChange}>
+                <SelectTrigger className="w-[180px] mt-4">
+                  <div className="flex items-center space-x-2">
+                    <Globe className="w-5 h-5 text-gray-500" />
+                    <SelectValue placeholder="Country" />
+                  </div>
+                </SelectTrigger>
 
-              <SelectContent>
-                {Object.keys(IDSizeByCountry).map((country) => (
-                  <SelectItem key={country} value={country}>
-                    {country}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                <SelectContent>
+                  {Object.keys(IDSizeByCountry).map((country) => (
+                    <SelectItem key={country} value={country}>
+                      {country}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
 
-            {/* Done Button */}
-            <div className="flex justify-end mt-2">
-              <Button className="bg-red-500 hover:bg-red-400 mx-3" onClick={handleRevert}>
-                Revert
+            {/* Zoom Slider */}
+            <div className="mt-4 flex items-center">
+              <label className="text-sm w-20">Zoom</label>
+              <input
+                type="range"
+                min="0.5"
+                max="3"
+                step="0.01"
+                value={zoomLevel}
+                onChange={handleZoomChange}
+                className="mt-2 flex-grow "
+              />
+            </div>
+
+            {/* Scale X Slider */}
+            <div className="mt-4 flex items-center">
+              <label className="text-sm w-20">Scale X</label>
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.01"
+                value={scaleX}
+                onChange={handleScaleXChange}
+                className="mt-2 flex-grow "
+              />
+            </div>
+
+            {/* Scale Y Slider */}
+            <div className="mt-4 flex items-center">
+              <label className="text-sm w-20">Scale Y</label>
+              <input
+                type="range"
+                min="0.5"
+                max="2"
+                step="0.01"
+                value={scaleY}
+                onChange={handleScaleYChange}
+                className="mt-2 flex-grow "
+              />
+            </div>
+
+            {/* Flip Buttons */}
+            <div className="mt-4 p-6 flex justify-center gap-4">
+              <Button variant="outline" onClick={handleFlipHorizontal} className="bg-blue-500 text-white">
+                <FlipHorizontal className="w-5 h-5" /> Flip Horizontally
+              </Button>
+              <Button variant="outline" onClick={handleFlipVertical} className="bg-blue-500 text-white">
+                <FlipVertical className="w-5 h-5" /> Flip Vertically
+              </Button>
+            </div>
+
+            
+
+            <div className="flex justify-end mt-4">
+              <Button className="bg-red-500 hover:bg-red-400 mx-3" onClick={() => setIsOpen(false)}>
+                Close
               </Button>
               <Button onClick={handleCrop}>
                 Done
               </Button>
-              
             </div>
           </DialogHeader>
         </DialogContent>
