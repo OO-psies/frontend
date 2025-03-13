@@ -23,6 +23,7 @@
     "react-component-export-image": "^1.0.6",
     "react-dom": "^18.3.1",
     "react-mask-editor": "^0.0.2",
+    "react-webcam": "^7.2.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7"
   },
