@@ -3,6 +3,11 @@ import Webcamera from "./Webcamera";
 
 export function UploadArea({ uploadedImage, onImageUpload,  }: { uploadedImage: string | null, onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void }) {
   
+  function setUploadedImage(image) {
+    uploadedImage = image
+  }
+
+
   return (
       <div className="w-full h-[390px] gap-4 border-2 border-dashed border-gray-300 bg-gray-50 p-6 rounded-lg flex items-center justify-center">
       {uploadedImage ? (
@@ -47,7 +52,7 @@ export function UploadArea({ uploadedImage, onImageUpload,  }: { uploadedImage: 
               onChange={onImageUpload}
             />
           </label>
-          <Webcamera />
+          <Webcamera onCapture={setUploadedImage(image)} />
         </div>
       )}
     </div>
