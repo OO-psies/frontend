@@ -1,6 +1,7 @@
 import UploadLogo from "../icons/upload.png";
+import Webcamera from "./Webcamera";
 
-export function UploadArea({ uploadedImage, onImageUpload }: { uploadedImage: string | null, onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void }) {
+export function UploadArea({ uploadedImage, onImageUpload,  }: { uploadedImage: string | null, onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void }) {
   
   return (
       <div className="w-full h-[390px] gap-4 border-2 border-dashed border-gray-300 bg-gray-50 p-6 rounded-lg flex items-center justify-center">
@@ -29,22 +30,25 @@ export function UploadArea({ uploadedImage, onImageUpload }: { uploadedImage: st
       ) : (
 
         // ------------------------- if there is no uploaded image -------------------------
-        <label
-          htmlFor="file-upload"
-          className="cursor-pointer text-gray-500 hover:text-gray-700 flex flex-col items-center"
-        >
-            <img src={UploadLogo} alt="Upload Logo" className="w-16 h-16 mb-4" />
-            <p className="text-sm text-gray-500 font-medium">Click to upload</p>
-            <p className="text-xs text-gray-400">PNG or JPG</p>
-          
-          <input
-            id="file-upload"
-            type="file"
-            accept="image/png, image/jpeg"
-            className="hidden"
-            onChange={onImageUpload}
-          />
-        </label>
+        <div>
+          <label
+            htmlFor="file-upload"
+            className="cursor-pointer text-gray-500 hover:text-gray-700 flex flex-col items-center"
+          >
+              <img src={UploadLogo} alt="Upload Logo" className="w-16 h-16 mb-4" />
+              <p className="text-sm text-gray-500 font-medium">Click to upload</p>
+              <p className="text-xs text-gray-400">PNG or JPG</p>
+            
+            <input
+              id="file-upload"
+              type="file"
+              accept="image/png, image/jpeg"
+              className="hidden"
+              onChange={onImageUpload}
+            />
+          </label>
+          <Webcamera />
+        </div>
       )}
     </div>
   );
