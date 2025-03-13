@@ -15,6 +15,7 @@ function App() {
   const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
   const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image 
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null); // Store actual file
  
 
   const handleImageUpload = async (
@@ -26,6 +27,10 @@ function App() {
       const imageUrl = URL.createObjectURL(file);
       setBaseImage(imageUrl); // Store original image separately
       setUploadedImage(imageUrl); 
+
+      setImageFile(file); // upload file for use
+      console.log("check image file>>>", imageFile)
+
       setCroppedImage(null); // Reset cropped image when new image is uploaded
       setBgRemovedImage(null); // Reset bg removed image when new image is uploaded
     } else {
@@ -165,6 +170,7 @@ function App() {
           <BgRemoverPopUp 
             uploadedImage={uploadedImage}
             uploadedMask={maskImage}
+            imageFile={imageFile}
             setBgRemovedImage={setBgRemovedImage}/>
 
         {/* Download */}

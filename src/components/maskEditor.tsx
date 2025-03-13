@@ -67,16 +67,21 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
             const g = data[i + 1];  // Green
             const b = data[i + 2];  // Blue
     
-            if (r === 0 && g === 0 && b === 0) {
-              // If pixel is black, turn it red
-              data[i] = 255;     // Red
-              data[i + 1] = 56;  // Green
-              data[i + 2] = 56;  // Blue
-              data[i + 3] = 255; // Keep full opacity
-            } else if (r === 255 && g === 255 && b === 255) {
+            if (r === 255 && g === 255 && b === 255) {
               // If pixel is white, make it transparent
               data[i + 3] = 0; // Set alpha to 0 (fully transparent)
             }
+            // currently only creating black and transparent mask
+            // if (r === 0 && g === 0 && b === 0) {
+            //   // If pixel is black, turn it red
+            //   data[i] = 255;     // Red
+            //   data[i + 1] = 56;  // Green
+            //   data[i + 2] = 56;  // Blue
+            //   data[i + 3] = 255; // Keep full opacity
+            // } else if (r === 255 && g === 255 && b === 255) {
+            //   // If pixel is white, make it transparent
+            //   data[i + 3] = 0; // Set alpha to 0 (fully transparent)
+            // }
           }
     
           // Put modified image data back to canvas
@@ -184,7 +189,7 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
         ? "source-over"  // Paint with color (mask)
         : "destination-out"; // Erase (make transparent)
         maskContext.beginPath();
-        maskContext.fillStyle = (evt.buttons > 1 || evt.shiftKey) ? "#ff3838" : maskColor;
+        maskContext.fillStyle = (evt.buttons > 1 || evt.shiftKey) ? "#000000" : maskColor; // black colour or maskcolour
         maskContext.arc(evt.offsetX, evt.offsetY, cursorSize, 0, 360);
         maskContext.fill();
         // Reset composite operation to normal after drawing
