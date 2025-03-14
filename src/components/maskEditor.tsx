@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState, useRef, useEffect } from "react";
 import "./maskEditor.less";
 import { hexToRgb, toMask } from "./utils";
 
@@ -46,6 +47,8 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
   const [strokeMaskContext, setStrokeMaskContext] = React.useState<CanvasRenderingContext2D | null>(null);
 
   const [size, setSize] = React.useState<{x: number, y: number}>({x: 256, y: 256})
+
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
   // (2b2) load maskContext with mask outline
   React.useLayoutEffect(() => {
@@ -118,6 +121,7 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
       img.onload = () => {
         context?.drawImage(img, 0, 0, adjustedWidth, adjustedHeight);
       }
+      setIsLoaded(true);
     }
   }, [src, context]);
 
@@ -165,7 +169,7 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
     }
   }, [maskCanvas, strokeMaskCanvas]);
 
-  // paints the maskContext which affects maskCanvas for returning, as well as strokeMaskCanvas and context
+  // Paints the maskContext which affects maskCanvas for returning, as well as strokeMaskCanvas and context
   React.useEffect(() => {
     const listener = (evt: MouseEvent) => {
       // for viewing the brush
@@ -251,55 +255,60 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
 
   React.useEffect(() => replaceMaskColor(maskColor, false), [maskColor]);
 
-  return <div className="react-mask-editor-outer h-full mx-auto mb-2">
-    <div
-      className="react-mask-editor-inner mx-auto"
-      style={{
-        width: size.x,
-        height: size.y,
-      }}
-    >
-
-      {/* image */}
-      <canvas
-        ref={canvas}
-        width={size.x}
-        height={size.y}
-        className="react-mask-editor-base-canvas"
-      />
-
-      {/* overlay mask - above image */}
-      <canvas
-        ref={maskCanvas}
-        width={size.x}
-        height={size.y}
-        style={{
-          width: size.x,
-          height: size.y,
-          opacity: maskOpacity,
-          mixBlendMode: maskBlendMode as any,
-        }}
-        className="react-mask-editor-mask-canvas"
-      />
-
-      <canvas ref={strokeMaskCanvas} 
-      width={size.x}
-      height={size.y}
-      style={{ visibility: "hidden" }} 
-       />
-
-      {/* brush mask - above white mask */}
-      <canvas
-        ref={cursorCanvas}
-        width={size.x}
-        height={size.y}
+  return (
+    <> 
+    {isLoaded && 
+    <div className="react-mask-editor-outer h-full mx-auto mb-2">
+      <div
+        className="react-mask-editor-inner mx-auto"
         style={{
           width: size.x,
           height: size.y,
         }}
-        className="react-mask-editor-cursor-canvas"
-      />
+      >
 
-    </div>
-  </div>
+        {/* image */}
+        <canvas
+          ref={canvas}
+          width={size.x}
+          height={size.y}
+          className="react-mask-editor-base-canvas"
+        />
+
+        {/* overlay mask - above image */}
+        <canvas
+          ref={maskCanvas}
+          width={size.x}
+          height={size.y}
+          style={{
+            width: size.x,
+            height: size.y,
+            opacity: maskOpacity,
+            mixBlendMode: maskBlendMode as any,
+          }}
+          className="react-mask-editor-mask-canvas"
+        />
+
+        <canvas ref={strokeMaskCanvas} 
+        width={size.x}
+        height={size.y}
+        style={{ visibility: "hidden" }} 
+        />
+
+        {/* brush mask - above white mask */}
+        <canvas
+          ref={cursorCanvas}
+          width={size.x}
+          height={size.y}
+          style={{
+            width: size.x,
+            height: size.y,
+          }}
+          className="react-mask-editor-cursor-canvas"
+        />
+
+      </div>
+  </div>}
+  </>
+  )
 }

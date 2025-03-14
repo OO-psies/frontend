@@ -22,8 +22,9 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
     const [isLoading, setIsLoading] = useState(false);
 
     // from BE (mask for overlay, image not used)
-    const [imageMask, setImageMask] = useState<string>(''); 
-    const [bgRemovedImage, loadBgRemovedImage] = useState<string>(''); // just normal photo from BE
+    const [imageMask, setImageMask] = useState<string | null>(null); 
+    const [shownImage, setShownImage] = useState<string | null>(null);
+    const [bgRemovedImage, loadBgRemovedImage] = useState<string | null>(null); // just normal photo from BE
 
     // for recording user strokes in maskEditor Child
     const canvas = useRef<HTMLCanvasElement>();
@@ -38,10 +39,10 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
     };
 
     // useEffect(() => {
-    //     console.log(canvas.current); // Should log a valid canvas element
-    // }, []);
+    //     handleTouchUp();
+    // }, [supplementMask]);
 
-    // Helper F0 - Sends image to BE on isOpen
+    // Event 1 - Sends image to BE on isOpen
     useEffect(() => {
         if (!isOpen) {
             
@@ -50,13 +51,13 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
         }
     }, [isOpen])
 
-    // Helper F0 - Converts Base64 to Image URL
+    // Helper (F1) - Converts Base64 to Image URL
     const convertToImageUrl = async (base64: string) => {
         return `data:image/png;base64,${base64}`;
     }
     
-    // Helper F1 - Converts Image URL to Base64
-    const convertToBase64 = async (image: File | string) => {
+    // Helper (F2) - Converts Image URL to Base64
+    const convertToBase64 = async (image: File | string): Promise<string> => {
 
         if (typeof(image) === 'string') {
             let file: File;
@@ -91,7 +92,7 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
         });
     }
 
-    // Helper F2 - API Request on render
+    // API (F3) - API Request on render
     const handleImageUpload = async () => {
         // on load, send over: 1) image
         // receive: 1) mask, 2) image
@@ -122,6 +123,7 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
             const dataMask = await convertToImageUrl(data.base64Mask)
             const dataResult = await convertToImageUrl(data.base64Result)
             setImageMask(dataMask);
+            setShownImage(uploadedImage);
             loadBgRemovedImage(dataResult);
 
         } catch (error) {
@@ -131,7 +133,7 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
         }
     };
 
-    // Helper F3 - API Request onclick touchup
+    // API (F4) - API Request onclick touchup
     const handleTouchUp = async () => {
         // if touchup is clicked, send over: 1) new mask (brush strokes), 2) old mask, 3) image
         // receive: 1) new mask, 2) image
@@ -171,6 +173,7 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
             setImageMask(dataMask);
             loadBgRemovedImage(dataResult);
 
+
         } catch (error) {
         console.error("Upload failed:", error);
         } finally {
@@ -178,19 +181,17 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
         }
     };
 
-    // F1 - Calls HF1 HF2 (converts and sends to BE for touchup)
+    // Event 2 - Calls F2, affects F0 (converts and triggers useEffect for sending to BE for touchup)
     const handleBgRemove = async () => {
-        const base64NewMask = await convertToBase64(toStrokeMask(strokeCanvas.current))
-
+        setIsLoading(true);
         setSupplementMask(toStrokeMask(strokeCanvas.current));
-        // console.log("Just the strokes >>>", toStrokeMask(strokeCanvas.current));
-        console.log("Just the strokes b64>>>", base64NewMask);
-        // console.log("Mask >>>", toMask(canvas.current));
+        console.log("Just the strokes >>>", toStrokeMask(strokeCanvas.current));
         console.log("be-mask", imageMask)
         console.log("be-result", bgRemovedImage)
+        // console.log("Mask >>>", toMask(canvas.current)); // not in use
     }
 
-    // F2 - Closes Dialog
+    // Event 3 - Closes Dialog
     const closeDialog = (() => {
         setIsOpen(false);
     })
@@ -222,7 +223,7 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
                         { !isLoading &&
                             <div className="items-center min-h-400"> 
                             <MaskEditor
-                                src={uploadedImage}
+                                src={shownImage}
                                 maskSrc={imageMask}
                                 canvasRef={canvas}
                                 strokeCanvasRef={strokeCanvas}
