@@ -29,7 +29,6 @@ function App() {
       setUploadedImage(imageUrl); 
 
       setImageFile(file); // upload file for use
-      console.log("check image file>>>", imageFile)
 
       setCroppedImage(null); // Reset cropped image when new image is uploaded
       setBgRemovedImage(null); // Reset bg removed image when new image is uploaded

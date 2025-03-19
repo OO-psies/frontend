@@ -6,7 +6,7 @@ import "react-mask-editor/dist/style.css";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton"
-import { Crop, Globe } from "lucide-react";
+import { CircleParking, Crop, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface BgRemoverPopUpProps {
@@ -38,10 +38,6 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
       setCursorSize(newSize); // Update cursor size state
     };
 
-    // useEffect(() => {
-    //     handleTouchUp();
-    // }, [supplementMask]);
-
     // Event 1 - Sends image to BE on isOpen
     useEffect(() => {
         if (!isOpen) {
@@ -57,27 +53,27 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
     }
     
     // Helper (F2) - Converts Image URL to Base64
-    const convertToBase64 = async (image: File | string): Promise<string> => {
+    const convertToBase64 = async (image: File): Promise<string> => {
 
-        if (typeof(image) === 'string') {
-            let file: File;
-            const response = await fetch(image);
-            const blob = await response.blob();
-            file = new File([blob], "image.png", { type: blob.type });
-            console.log(file, "heres the file type")
+        // if (typeof(image) === 'string') {
+        //     let file: File;
+        //     const response = await fetch(image);
+        //     const blob = await response.blob();
+        //     file = new File([blob], "image.png", { type: blob.type });
+        //     console.log(file, "heres the file type")
 
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file); // Read file as Base64
-                reader.onload = () => {
-                    const base64String = reader.result as string;
-                    // Remove the 'data:image/<file-type>;base64,' prefix if present
-                    const base64Data = base64String.split(",")[1];
-                    resolve(base64Data); // This gives you just the base64 part
-                };
-                reader.onerror = (error) => reject(error);
-            });
-        }
+        //     return new Promise((resolve, reject) => {
+        //         const reader = new FileReader();
+        //         reader.readAsDataURL(file); // Read file as Base64
+        //         reader.onload = () => {
+        //             const base64String = reader.result as string;
+        //             // Remove the 'data:image/<file-type>;base64,' prefix if present
+        //             const base64Data = base64String.split(",")[1];
+        //             resolve(base64Data); // This gives you just the base64 part
+        //         };
+        //         reader.onerror = (error) => reject(error);
+        //     });
+        // }
 
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -118,7 +114,7 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
             }
         );
             const data = await response.json();
-            console.log("Server Response:", data);
+            // console.log("Server Response:", data);
 
             const dataMask = await convertToImageUrl(data.base64Mask)
             const dataResult = await convertToImageUrl(data.base64Result)
@@ -183,11 +179,14 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
 
     // Event 2 - Calls F2, affects F0 (converts and triggers useEffect for sending to BE for touchup)
     const handleBgRemove = async () => {
-        setIsLoading(true);
-        setSupplementMask(toStrokeMask(strokeCanvas.current));
-        console.log("Just the strokes >>>", toStrokeMask(strokeCanvas.current));
-        console.log("be-mask", imageMask)
-        console.log("be-result", bgRemovedImage)
+        // setIsLoading(true);
+        // console.log(uploadedImage);
+
+        const convertedStrokeMask = toStrokeMask(strokeCanvas.current);
+        setSupplementMask(convertedStrokeMask);
+        console.log("Just the strokes >>>", convertedStrokeMask);
+        // console.log("be-mask", imageMask)
+        // console.log("be-result", bgRemovedImage)
         // console.log("Mask >>>", toMask(canvas.current)); // not in use
     }
 
@@ -223,7 +222,7 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
                         { !isLoading &&
                             <div className="items-center min-h-400"> 
                             <MaskEditor
-                                src={shownImage}
+                                src={uploadedImage}
                                 maskSrc={imageMask}
                                 canvasRef={canvas}
                                 strokeCanvasRef={strokeCanvas}
@@ -233,7 +232,6 @@ export default function BgRemoverPopUp({ uploadedImage, uploadedMask, imageFile,
                                 />
                         </div>
                         }
-
 
                 {/* Done Button */}
                 <div className="flex justify-end mt-4 gap-2">

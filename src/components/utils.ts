@@ -30,9 +30,11 @@ export const toMask = (canvas: any) => {
   return dataUrl;
 }
 
+// Should only be called once as it mutably changes mask itself
 export const toStrokeMask = (canvas: any) => {
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
+  console.log(canvas.toDataURL())
 
   const width = canvas.width;
   const height = canvas.height;
@@ -50,19 +52,16 @@ export const toStrokeMask = (canvas: any) => {
       data[i + 1] = 0;
       data[i + 2] = 0;
     }
-
     // Convert Purple (128, 0, 128) strokes to White (255,255,255)
     else if (r === 128 && g === 0 && b === 128) {
       data[i] = 255;
       data[i + 1] = 255;
       data[i + 2] = 255;
-    }
-    // Set the background to Red (255, 0, 0)
-    else {
-      data[i] = 255;
+    } else {
+      data[i] = 255;  // Red
       data[i + 1] = 0;
       data[i + 2] = 0;
-      data[i + 3] = 255; // Make it fully opaque
+      data[i + 3] = 255;
     }
   }
 

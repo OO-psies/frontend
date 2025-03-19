@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import "./maskEditor.less";
 import { hexToRgb, toMask } from "./utils";
 
@@ -30,70 +30,43 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
   const maskBlendMode = props.maskBlendMode ?? MaskEditorDefaults.maskBlendMode;
   const maskOpacity = props.maskOpacity ?? MaskEditorDefaults.maskOpacity;
 
-  // (1)
+  // (V0) - for ensuring image readiness before react renders component
+  const [imageSrc, setImageSrc] = React.useState<string | null>(null);
+
+  // (V1) - for background image
   const canvas = React.useRef<HTMLCanvasElement|null>(null);
   const [context, setContext] = React.useState<CanvasRenderingContext2D|null>(null);
 
-  // (2)
+  // (V2) - for overlay mask
   const maskCanvas = React.useRef<HTMLCanvasElement|null>(null);
   const [maskContext, setMaskContext] = React.useState<CanvasRenderingContext2D|null>(null);
 
-  // (3)
+  // (V3) - for brush cursor
   const cursorCanvas = React.useRef<HTMLCanvasElement|null>(null);
   const [cursorContext, setCursorContext] = React.useState<CanvasRenderingContext2D|null>(null);
 
-  // (4)
+  // (V4) - for storing strokes to send to be
   const strokeMaskCanvas = React.useRef<HTMLCanvasElement | null>(null);
   const [strokeMaskContext, setStrokeMaskContext] = React.useState<CanvasRenderingContext2D | null>(null);
 
+  // (VMisc)
   const [size, setSize] = React.useState<{x: number, y: number}>({x: 256, y: 256})
-
   const [isLoaded, setIsLoaded] = useState<boolean>(false);
 
-  // (2b2) load maskContext with mask outline
-  React.useLayoutEffect(() => {
-    if (maskContext) {
-      maskContext.fillStyle = "#000000"; // best non white (#ffffff) for toMask ("#fa7878" traces)
-      maskContext.fillRect(0, 0, size.x, size.y);
+  // (Z) Create Image obj and load first before image is drawn onto canvas' context - beat race condition w react that causes blank images (major bug)
+  React.useEffect(() => {
+    if (!src) return;
+  
+    const img = new Image();
+    img.src = src;
 
-      const img = new Image;
-      img.src = maskSrc;
+    img.onload = () => {
+      setImageSrc(src);
+      setIsLoaded(true);
+    }
+  }, [src]);
 
-        img.onload = () => {
-          maskContext.drawImage(img, 0, 0, size.x, size.y); // Draw image
-    
-          const imageData = maskContext.getImageData(0, 0, size.x, size.y);
-          const data = imageData.data;
-
-          for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];      // Red
-            const g = data[i + 1];  // Green
-            const b = data[i + 2];  // Blue
-    
-            if (r === 255 && g === 255 && b === 255) {
-              // If pixel is white, make it transparent
-              data[i + 3] = 0; // Set alpha to 0 (fully transparent)
-            }
-            // currently only creating black and transparent mask
-            // if (r === 0 && g === 0 && b === 0) {
-            //   // If pixel is black, turn it red
-            //   data[i] = 255;     // Red
-            //   data[i + 1] = 56;  // Green
-            //   data[i + 2] = 56;  // Blue
-            //   data[i + 3] = 255; // Keep full opacity
-            // } else if (r === 255 && g === 255 && b === 255) {
-            //   // If pixel is white, make it transparent
-            //   data[i + 3] = 0; // Set alpha to 0 (fully transparent)
-            // }
-          }
-    
-          // Put modified image data back to canvas
-          maskContext.putImageData(imageData, 0, 0);
-      }
-  }
-}, [maskContext, strokeMaskContext, maskCanvas, size]); 
-
-  // (1b) creates/stores context
+  // (A) creates canvas context - contexts are what allows images/drawings to be rendered on canvases
   React.useLayoutEffect(() => {
     if (canvas.current && !context) {
       const ctx = (canvas.current as HTMLCanvasElement).getContext("2d");
@@ -101,33 +74,9 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
     }
   }, [canvas]);
 
-  // (1b2) set image on context as bg
-  React.useEffect(() => {
-    if (src && context) {
-      const img = new Image;
-      img.src = src;
-
-      const naturalWidth = img.naturalWidth;
-      const naturalHeight = img.naturalHeight;
-
-      const adjustedHeight = 500;
-      const adjustedWidth = Math.round(naturalWidth / (naturalHeight/adjustedHeight));
-
-      img.height = adjustedHeight; 
-      img.width = adjustedWidth; 
-
-      setSize({x: adjustedWidth, y: adjustedHeight});
-
-      img.onload = () => {
-        context?.drawImage(img, 0, 0, adjustedWidth, adjustedHeight);
-      }
-      setIsLoaded(true);
-    }
-  }, [src, context]);
-
-  // (2b) creates/stores maskContext
+  // (B) creates maskContext (fully black transparent first)
   React.useLayoutEffect(() => {
-    if (maskCanvas.current && !context) {
+    if (maskCanvas.current && !maskContext) {
       const ctx = (maskCanvas.current as HTMLCanvasElement).getContext("2d");
       if (ctx) {
         ctx.fillStyle = "#000000";
@@ -137,25 +86,92 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
     }
   }, [maskCanvas]);
 
-  // (4b) creates/stores strokeMaskContext
+  // (C) imprint maskContext with mask from BE -> to display interactive overlay for user's edits
+  React.useLayoutEffect(() => {
+      if (maskContext) {
+        maskContext.fillStyle = "#000000"; // best non white (#ffffff) for toMask ("#fa7878" traces)
+        maskContext.fillRect(0, 0, size.x, size.y);
+  
+        const img = new Image;
+        img.src = maskSrc;
+  
+          img.onload = () => {
+            maskContext.drawImage(img, 0, 0, size.x, size.y); // Draw image
+      
+            const imageData = maskContext.getImageData(0, 0, size.x, size.y);
+            const data = imageData.data;
+  
+            for (let i = 0; i < data.length; i += 4) {
+              const r = data[i];      // Red
+              const g = data[i + 1];  // Green
+              const b = data[i + 2];  // Blue
+      
+              if (r === 255 && g === 255 && b === 255) {
+                // If pixel is white, make it transparent
+                data[i + 3] = 0; // Set alpha to 0 (fully transparent)
+              }
+              // currently only creating black and transparent mask
+              // if (r === 0 && g === 0 && b === 0) {
+              //   // If pixel is black, turn it red
+              //   data[i] = 255;     // Red
+              //   data[i + 1] = 56;  // Green
+              //   data[i + 2] = 56;  // Blue
+              //   data[i + 3] = 255; // Keep full opacity
+              // } else if (r === 255 && g === 255 && b === 255) {
+              //   // If pixel is white, make it transparent
+              //   data[i + 3] = 0; // Set alpha to 0 (fully transparent)
+              // }
+            }
+      
+            // Put modified image data back to canvas
+            maskContext.putImageData(imageData, 0, 0);
+        }
+    }
+  }, [maskContext, strokeMaskContext, maskCanvas, size]); 
+
+  // (D) creates strokeMaskContext -> to record brush strokes to send BE
   React.useLayoutEffect(() => {
     if (strokeMaskCanvas.current && !context) {
       const ctx = strokeMaskCanvas.current.getContext("2d");
       if (ctx) {
-        ctx.fillStyle = "red"; // Full red background
+        ctx.fillStyle = "#000000"; // white
         ctx.fillRect(0, 0, size.x, size.y);
       }
       setStrokeMaskContext(ctx);
     }
   }, [strokeMaskCanvas]);
 
-  // (3) creates/sets cursorContext
+  // (E) creates cursorContext -> to display brush for user
   React.useLayoutEffect(() => {
     if (cursorCanvas.current && !context) {
       const ctx = (cursorCanvas.current as HTMLCanvasElement).getContext("2d");
       setCursorContext(ctx);
     }
   }, [cursorCanvas]);
+
+  // (F) Finally, convert image blob from parent into image and paint onto context for user to see
+  React.useEffect(() => {
+    if (!src || !context) return;
+
+    const img = new Image;
+    img.src = src;
+
+    img.onload = () => {
+      if (context) {
+        const naturalWidth = img.naturalWidth;
+        const naturalHeight = img.naturalHeight;
+  
+        const adjustedHeight = 500;
+        const adjustedWidth = Math.round(naturalWidth / (naturalHeight/adjustedHeight));
+  
+        img.height = adjustedHeight; 
+        img.width = adjustedWidth; 
+  
+        setSize({x: adjustedWidth, y: adjustedHeight});
+        context.drawImage(img, 0, 0, adjustedWidth, adjustedHeight);
+      }
+    } 
+  }, [imageSrc, context]);
 
   // >>> Loads mask canvas for export/use by parent
   React.useLayoutEffect(() => {
@@ -257,7 +273,7 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
 
   return (
     <> 
-    {isLoaded && 
+    {
     <div className="react-mask-editor-outer h-full mx-auto mb-2">
       <div
         className="react-mask-editor-inner mx-auto"
