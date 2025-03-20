@@ -9,15 +9,36 @@ import BgRemoverPopUp from "./homepage/BgRemoverPopUp";
 
 
 function App() {
-  const [baseImage, setBaseImage] = useState<string | null>(null); // Stores the original image
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [maskImage, setMaskImage] = useState<string | null>(null); // !!! testing
+  const [baseImage, setBaseImage] = useState<string | null>(null); // (1) Working image (display, saves all function edits)
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null); // (2) Original image (backup)
+  const [baseImageWithBg, setBaseImageWithBg] = useState<string | null>(null); // (3) Working copy image for bgremover (saves all image edits except bgremove)
+  const [savedMask, setSavedMask] = useState<string | null>(null); // (4) Working copy mask for bgremover (saves all mask edits from bgremove)
+
+  // (!) Do we need this
   const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
   const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image 
-  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null); // Store actual file
- 
 
+  // (!) Testing Mask Canvas
+  // const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  // !!!for testing mask
+  // const handleButtonClick = () => {
+  //   fileInputRef.current?.click(); // Triggers the file input when button is clicked
+  // };
+  // const handleMaskUpload = async (
+  //   event: React.ChangeEvent<HTMLInputElement>
+  // ) => {
+  //   const file = event.target.files?.[0];
+
+  //   if (file) {
+  //     const imageUrl = URL.createObjectURL(file);
+  //     console.log("imageURL", imageUrl)
+  //     setMaskImage(imageUrl);
+  //   }
+  // };
+
+  // (0) Upload Image -> baseImage (working copy) + uploadedImage (untouched copy)
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -25,11 +46,11 @@ function App() {
 
     if (file) {
       const imageUrl = URL.createObjectURL(file);
-      setBaseImage(imageUrl); // Store original image separately
+      setBaseImage(imageUrl); 
       setUploadedImage(imageUrl); 
+      setBaseImageWithBg(imageUrl);
 
       setImageFile(file); // upload file for use
-
       setCroppedImage(null); // Reset cropped image when new image is uploaded
       setBgRemovedImage(null); // Reset bg removed image when new image is uploaded
     } else {
@@ -37,31 +58,19 @@ function App() {
     }
   };
 
-
-  // !!!for testing mask
-  const handleButtonClick = () => {
-    fileInputRef.current?.click(); // Triggers the file input when button is clicked
-  };
-  const handleMaskUpload = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-
-    if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      console.log("imageURL", imageUrl)
-      setMaskImage(imageUrl);
-    }
-  };
-
+  // (1) Download working image -> baseImage
   const handleDownload = async () => {
     let fileName = prompt("Enter a name for the file")?.trim() || "edited_image";
 
     // ensure filename remains exactly as inputted
     fileName = fileName.replace(/[^a-zA-Z0-9-_]/g, "");
 
-    // prioritize downloading only edited images
-    const imageToDownload = croppedImage || bgRemovedImage || uploadedImage || baseImage;
+    // (??a) prioritize downloading only edited images
+    // const imageToDownload = croppedImage || bgRemovedImage || uploadedImage || baseImage;
+
+    // (??b) only download working copy
+    const imageToDownload = baseImage;
+
     if (!imageToDownload) {
       alert("No image available to download.");
       return;
@@ -109,7 +118,8 @@ function App() {
             <div className="border border-gray-300 shadow-md rounded-md p-2 w-[350px] h-full flex items-center justify-center">
               {baseImage ? (
                 <img
-                  src={croppedImage || uploadedImage || baseImage}
+                  // src={croppedImage || uploadedImage || baseImage} !!!!!
+                  src={baseImage}
                   alt="Processed Image"
                   className="w-full h-full object-cover rounded-md"
                 />
@@ -133,20 +143,47 @@ function App() {
         <div className="flex pt-8 space-x-4">
 
           {/* Cropper */}
-          <CropPopUp baseImage={baseImage} setCroppedImage={(cropped) => {
-            setUploadedImage(cropped); // Update the displayed image
+          <CropPopUp baseImage={baseImage}
+          setCroppedImage={(cropped) => {
+            setBaseImage(cropped); // Update the displayed image
             setCroppedImage(cropped);  // Store the cropped version separately
+            setBaseImageWithBg(cropped) // !Save the cropped version separately for bgremover
           }}
           />
 
-          <Enhance baseImage={baseImage} setEnhanceImage={(enhanced) => {
-            setUploadedImage(enhanced); // Update the displayed image
+          <Enhance baseImage={baseImage}
+          setEnhanceImage={(enhanced) => {
+            setBaseImage(enhanced); // Update the displayed image
             setCroppedImage(enhanced);  // Store the cropped version separately
+            setBaseImageWithBg(enhanced) // !Save the cropped version separately for bgremover
           }}
           />
 
-          {/* TEST */}
-          <>
+          {/* BG Remover
+            1. baseImage (IN: working image copy for display)
+            2. savedMask (IN: working mask copy for display & BE processing)
+            3. setBaseImage (OUT: edited image -> to working image copy for display)
+            4. setSavedMask (OUT: latest mask output -> to working mask copy for use next time)
+           */}
+          <BgRemoverPopUp
+            baseImageWithBg={baseImageWithBg} // For bgremover to display as src
+            savedMask={savedMask} // For bgremover to display as overlay (if true)
+            setBaseImage={setBaseImage} // To update working copy for display
+            setSavedMask={setSavedMask} // To save for future bg removal use (within session)
+            />
+
+          {/* Download */}
+          <Button
+            disabled={!baseImage}
+            className="bg-emerald-600 hover:bg-emerald-500"
+            onClick={handleDownload}
+          >
+            <Download />
+            Download
+          </Button>
+
+          {/* TEST FOR BG REMOVER */}
+          {/* <>
             <input
               type="file"
               accept="image/*"
@@ -162,25 +199,7 @@ function App() {
 
           <Button disabled={!uploadedImage} onClick={() => console.log(maskImage)}>
             Check Mask
-          </Button>
-
-
-          {/* BG Remover */}
-          <BgRemoverPopUp
-            uploadedImage={uploadedImage}
-            uploadedMask={maskImage}
-            imageFile={imageFile}
-            setBgRemovedImage={setBgRemovedImage}/>
-
-          {/* Download */}
-          <Button
-            disabled={!uploadedImage}
-            className="bg-emerald-600 hover:bg-emerald-500"
-            onClick={handleDownload}
-          >
-            <Download />
-            Download
-          </Button>
+          </Button> */}
         </div>
       </div>
     </>
