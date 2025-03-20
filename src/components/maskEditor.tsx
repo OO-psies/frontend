@@ -106,7 +106,7 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
               const g = data[i + 1];  // Green
               const b = data[i + 2];  // Blue
       
-              if (r === 255 && g === 255 && b === 255) {
+              if (r >= 200 && g >= 200 && b >= 200) {
                 // If pixel is white, make it transparent
                 data[i + 3] = 0; // Set alpha to 0 (fully transparent)
               }
