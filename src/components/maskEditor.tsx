@@ -9,6 +9,8 @@ export interface MaskEditorProps {
   canvasRef?: React.MutableRefObject<HTMLCanvasElement>;
   strokeCanvasRef?: React.MutableRefObject<HTMLCanvasElement>;
   cursorSize?: number;
+  onChildLoaded?: () => void; // Setter function for parent state
+  onSizeChange?: (width: number, height: number) => void; // Callback to send dimensions to parent
   onCursorSizeChange?: (size: number) => void;
   maskOpacity?: number;
   maskColor?: string;
@@ -65,6 +67,10 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
       setIsLoaded(true);
     }
   }, [src]);
+
+  React.useEffect(() => {
+
+  }, [])
 
   // (A) creates canvas context - contexts are what allows images/drawings to be rendered on canvases
   React.useLayoutEffect(() => {
@@ -169,6 +175,9 @@ export const MaskEditor: React.FC<MaskEditorProps> = (props: MaskEditorProps) =>
   
         setSize({x: adjustedWidth, y: adjustedHeight});
         context.drawImage(img, 0, 0, adjustedWidth, adjustedHeight);
+
+        // props.onChildLoaded?.();
+        // props.onSizeChange?.(adjustedWidth, adjustedHeight);
       }
     } 
   }, [imageSrc, context]);

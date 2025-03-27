@@ -144,10 +144,14 @@ function App() {
 
           {/* Cropper */}
           <CropPopUp baseImage={baseImage}
+          savedMask={savedMask}
           setCroppedImage={(cropped) => {
             setBaseImage(cropped); // Update the displayed image
             setCroppedImage(cropped);  // Store the cropped version separately
             setBaseImageWithBg(cropped) // !Save the cropped version separately for bgremover
+          }}
+          setSavedMask={() => {
+
           }}
           />
 

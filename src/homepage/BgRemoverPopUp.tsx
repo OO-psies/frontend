@@ -40,6 +40,14 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
       setCursorSize(newSize); // Update cursor size state
     };
 
+    // [!!!Testing for debug] Retrieve child loaded dimensions 
+    // const [childWidth, setChildWidth] = useState<number | null>(null);
+    // const [childHeight, setChildHeight] = useState<number | null>(null);
+    // const [childLoaded, setChildLoaded] = useState<boolean>(false);
+    // const tryWidth = 655;
+    // const tryHeight = 500;
+    // const [isReadyToLoad, setIsReadyToLoad] = useState(false);
+
     // Event 1 - Sends image to BE on isOpen
     useEffect(() => {
         if (isOpen) {
@@ -50,6 +58,17 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
             }
         }
     }, [isOpen])
+
+    // [!!!Testing for Debug] Event 2 - Obtains Child element maskEditor's dimensions for rendering
+    // useEffect(() => {
+    //     console.log("child loaded >>>", childLoaded);
+    // }, [childLoaded])
+    // useEffect(() => {
+    //     console.log("child width >>>", childWidth);
+    // }, [childWidth])
+    // useEffect(() => {
+    //     console.log("child height >>>", childHeight);
+    // }, [childHeight])
 
     // Helper (F1) - Converts Base64 to Image URL
     const convertToImageUrl = async (base64: string) => {
@@ -233,14 +252,15 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
                 </DialogDescription>
 
                 {/* Cropping Image */}
-                    <div className="this flex mb-10">
+
                         { isLoading &&
-                            <Skeleton className="h-[400px] w-full"/>
+                            <div className="this flex mb-10">
+                                <Skeleton className="h-[400px] w-full"/>
+                            </div>
                         }
-                    </div>
 
                         { !isLoading &&
-                            <div className="items-center min-h-400"> 
+                            <div className="items-center"> 
                             <MaskEditor
                                 src={baseImageWithBg} //to store currentImageWithBg
                                 maskSrc={imageMask}
@@ -248,9 +268,8 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
                                 strokeCanvasRef={strokeCanvas}
                                 maskColor="#23272d"
                                 maskBlendMode="normal"
-                                style={{ maxHeight: "100%", display: "block" }} 
                                 />
-                        </div>
+                            </div>
                         }
 
                 {/* Done Button */}

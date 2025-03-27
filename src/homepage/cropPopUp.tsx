@@ -11,9 +11,10 @@ import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
 interface CropPopUpProps {
   baseImage: string;
   setCroppedImage: (image: string | null) => void;
+  setSavedMask: (image: string | null) => void;
 }
 
-export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps) {
+export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: CropPopUpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const imageRef = useRef<HTMLImageElement | null>(null);
   const cropperRef = useRef<Cropper | null>(null);
@@ -137,6 +138,8 @@ export default function CropPopUp({ baseImage, setCroppedImage }: CropPopUpProps
           const blobUrl = URL.createObjectURL(blob);
           console.log("Cropped Image Blob URL:", blobUrl);
           setCroppedImage(blobUrl);
+          // setBaseImage(blobUrl);
+          // setBaseImageWithBg(blobUrl);
         }
       }, "image/png", 1.0);
     }
