@@ -6,6 +6,7 @@ import { Wand2, ImageOff, Download } from "lucide-react";
 import CropPopUp from "./homepage/cropPopUp";
 import Enhance from "./homepage/Enhance";
 import BgRemoverPopUp from "./homepage/BgRemoverPopUp";
+import BgColourPopUp from "./homepage/BgColourPopUp";
 
 
 function App() {
@@ -53,6 +54,7 @@ function App() {
       setImageFile(file); // upload file for use
       setCroppedImage(null); // Reset cropped image when new image is uploaded
       setBgRemovedImage(null); // Reset bg removed image when new image is uploaded
+      
     } else {
       setUploadedImage(null);
     }
@@ -175,6 +177,11 @@ function App() {
             setBaseImage={setBaseImage} // To update working copy for display
             setSavedMask={setSavedMask} // To save for future bg removal use (within session)
             />
+            {/* Enhance */}
+           <BgColourPopUp 
+             uploadedImage={uploadedImage}
+             setUploadedImage={setUploadedImage}
+           />  
 
           {/* Download */}
           <Button
