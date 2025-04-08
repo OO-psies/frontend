@@ -152,8 +152,8 @@ function App() {
             setCroppedImage(cropped);  // Store the cropped version separately
             setBaseImageWithBg(cropped) // !Save the cropped version separately for bgremover
           }}
-          setSavedMask={() => {
-
+          setSavedMask={(croppedMask) => {
+            setSavedMask(croppedMask)
           }}
           />
 
