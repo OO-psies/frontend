@@ -13,8 +13,8 @@ import { Button } from "@/components/ui/button";
 import { SketchPicker } from "react-color";
 
 interface BgColourPopUpProps {
-  bgRemovedImage: string | null; // background removed image from previous page
-  setBgcolorImage: (image: string | null) => void;
+  bgRemovedImage: string | null; // background removed image from parent
+  setBgcolorImage: (image: string | null) => void; // function to update the displayed image in the parent
 }
 
 export default function BgColourPopUp({
@@ -24,94 +24,57 @@ export default function BgColourPopUp({
   const [isOpen, setIsOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [color, setColor] = useState<string>("#ffffff");
-  // savedBgColor remembers the applied background color from the previous change.
-  const [savedBgColor, setSavedBgColor] = useState<string | null>(null);
+  const [color, setColor] = useState<string>("");
+
+  // This state is used to store the original image for re-coloring,
+  // and it is set only once. We never overwrite it to allow multiple color changes.
+  const [originalBgRemovedImage, setOriginalBgRemovedImage] = useState<string | null>(null);
+
+  // When bgRemovedImage is provided for the first time, store it in originalBgRemovedImage.
+  useEffect(() => {
+    if (bgRemovedImage && !originalBgRemovedImage) {
+      setOriginalBgRemovedImage(bgRemovedImage);
+    }
+  }, [bgRemovedImage, originalBgRemovedImage]);
 
   const handleChangeComplete = (selectedColor: any) => {
     setColor(selectedColor.hex);
   };
 
-  // Helper: convert hex to RGB
-  const hexToRgb = (hex: string) => {
-    let cleaned = hex.replace(/^#/, "");
-    if (cleaned.length === 3) {
-      cleaned = cleaned
-        .split("")
-        .map((c) => c + c)
-        .join("");
-    }
-    const num = parseInt(cleaned, 16);
-    return {
-      r: (num >> 16) & 255,
-      g: (num >> 8) & 255,
-      b: num & 255,
-    };
-  };
-
-  // Helper: check if a pixel matches the target color
-  const colorsMatch = (
-    r: number,
-    g: number,
-    b: number,
-    target: { r: number; g: number; b: number }
-  ) => {
-    return r === target.r && g === target.g && b === target.b;
-  };
-
-  // Draw the image on canvas.
-  // If no savedBgColor exists, fill with the current color and draw the image.
-  // Otherwise, replace the savedBgColor pixels with the new color.
   const drawOnCanvas = () => {
-    if (!bgRemovedImage || !canvasRef.current) return;
+    // If we have no image to work with, exit early.
+    if ((!bgRemovedImage && !originalBgRemovedImage) || !canvasRef.current) return;
+
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    // Use originalBgRemovedImage if a color is selected; otherwise use bgRemovedImage.
+    const imageSrc =
+      color !== "" && originalBgRemovedImage ? originalBgRemovedImage : bgRemovedImage;
+    if (!imageSrc) return;
+
     const img = new Image();
     img.crossOrigin = "Anonymous";
-    img.src = bgRemovedImage;
+    img.src = imageSrc;
+
     img.onload = () => {
-      // set canvas dimensions to the image’s dimensions
       canvas.width = img.width;
       canvas.height = img.height;
 
-      if (!savedBgColor) {
-        // First application: fill with the selected color and draw the image on top.
+      // If a color is selected, fill the canvas with the color before drawing the image.
+      // Otherwise, simply clear the canvas.
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (color !== "") {
         ctx.fillStyle = color;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      } else {
-        // Subsequent changes:
-        // Draw the flattened image (which was saved from before)
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        // Access the current pixel data.
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const data = imageData.data;
-
-        const prevColorRgb = hexToRgb(savedBgColor);
-        const newColorRgb = hexToRgb(color);
-
-        // Loop over every pixel and replace pixels matching the previously saved color.
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i],
-            g = data[i + 1],
-            b = data[i + 2],
-            a = data[i + 3];
-          if (a > 0 && colorsMatch(r, g, b, prevColorRgb)) {
-            data[i] = newColorRgb.r;
-            data[i + 1] = newColorRgb.g;
-            data[i + 2] = newColorRgb.b;
-          }
-        }
-        // Write the updated pixel data back to the canvas.
-        ctx.putImageData(imageData, 0, 0);
       }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       setImageLoaded(true);
     };
   };
 
-  // Redraw canvas when bgRemovedImage, color, or dialog open state changes.
+  // Redraw the canvas every time the modal is open, or bgRemovedImage, color, or originalBgRemovedImage change.
   useEffect(() => {
     if (isOpen) {
       const tryDraw = () => {
@@ -123,16 +86,15 @@ export default function BgColourPopUp({
       };
       tryDraw();
     }
-  }, [bgRemovedImage, color, isOpen]);
+  }, [bgRemovedImage, color, isOpen, originalBgRemovedImage]);
 
-  // Reset the imageLoaded flag when the dialog closes.
   useEffect(() => {
     if (!isOpen) {
       setImageLoaded(false);
     }
   }, [isOpen]);
 
-  // Helper: get the flattened canvas image.
+  // Get the updated image from the canvas as a data URL.
   const getCanvasDataUrl = (): string | null => {
     if (canvasRef.current) {
       return canvasRef.current.toDataURL("image/png");
@@ -140,12 +102,11 @@ export default function BgColourPopUp({
     return null;
   };
 
-  // On clicking Done, update parent's image and save the applied color.
+  // When "Done" is clicked, pass the canvas image back to the parent.
+  // Note that if no color is selected, the original image is passed.
   const handleDone = () => {
     const dataUrl = getCanvasDataUrl();
     setBgcolorImage(dataUrl);
-    // Save the newly applied color for subsequent changes.
-    setSavedBgColor(color);
     setIsOpen(false);
   };
 
@@ -165,10 +126,10 @@ export default function BgColourPopUp({
               Choose a color to replace the image background.
             </DialogDescription>
           </DialogHeader>
+
           <div className="flex flex-col md:flex-row gap-4">
-            {/* Canvas container */}
             <div className="flex-1 flex justify-center">
-              {bgRemovedImage ? (
+              {bgRemovedImage || originalBgRemovedImage ? (
                 <canvas
                   ref={canvasRef}
                   className="border border-gray-300 max-w-full h-auto"
@@ -177,12 +138,12 @@ export default function BgColourPopUp({
                 <Skeleton className="w-full h-64" />
               )}
             </div>
-            {/* Color Picker */}
+
             <div className="flex-initial flex justify-center md:justify-end">
               <SketchPicker color={color} onChangeComplete={handleChangeComplete} />
             </div>
           </div>
-          {/* Done Button */}
+
           <div className="flex justify-end mt-4">
             <Button onClick={handleDone} disabled={!imageLoaded}>
               Done
