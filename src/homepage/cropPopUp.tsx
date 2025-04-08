@@ -10,14 +10,17 @@ import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
 
 interface CropPopUpProps {
   baseImage: string;
+  savedMask: string | null;
   setCroppedImage: (image: string | null) => void;
   setSavedMask: (image: string | null) => void;
 }
 
-export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: CropPopUpProps) {
+export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSavedMask }: CropPopUpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const imageRef = useRef<HTMLImageElement | null>(null);
+  const maskRef = useRef<HTMLImageElement | null>(null); // ! for mask
   const cropperRef = useRef<Cropper | null>(null);
+  const cropperMaskRef = useRef<Cropper | null>(null); // ! for mask
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [scaleX, setScaleX] = useState(1);
@@ -56,6 +59,26 @@ export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: 
       console.log("Cropper initialized.");
     }
 
+    // ! for mask
+    if (isOpen && savedMask && maskRef.current) {
+      console.log("Initializing Cropper for mask...");
+      if (cropperMaskRef.current) {
+        cropperMaskRef.current.destroy();
+      }
+
+      cropperMaskRef.current = new Cropper(maskRef.current, {
+        autoCropArea: 1,
+        viewMode: 1,
+        dragMode: "crop",
+        responsive: true,
+        zoomable: true,
+        background: false,
+        aspectRatio: aspectRatio || NaN,
+      });
+
+      console.log("Cropper for mask initialized.");
+    }
+
     return () => {
       cropperRef.current?.destroy();
       cropperRef.current = null;
@@ -72,6 +95,7 @@ export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: 
       console.log(`Auto-cropping to ${dimensions.width}x${dimensions.height} ${dimensions.unit}`);
       const aspectRatio = dimensions.width / dimensions.height;
       cropperRef.current.setAspectRatio(aspectRatio);
+      cropperMaskRef.current?.setAspectRatio(aspectRatio);
     }
   };
 
@@ -83,6 +107,7 @@ export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: 
     setAspectRatio(newRatio);
     if (cropperRef.current) {
       cropperRef.current.setAspectRatio(newRatio || NaN);
+      cropperMaskRef.current?.setAspectRatio(newRatio || NaN);
     }
   };
 
@@ -91,6 +116,7 @@ export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: 
     setZoomLevel(newZoom);
     if (cropperRef.current) {
       cropperRef.current.zoomTo(newZoom);
+      cropperMaskRef.current?.zoomTo(newZoom);
     }
   };
 
@@ -99,6 +125,7 @@ export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: 
     setScaleX(newScaleX);
     if (cropperRef.current) {
       cropperRef.current.scaleX(newScaleX);
+      cropperMaskRef.current?.scaleX(newScaleX);
     }
   };
 
@@ -107,6 +134,7 @@ export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: 
     setScaleY(newScaleY);
     if (cropperRef.current) {
       cropperRef.current.scaleY(newScaleY);
+      cropperMaskRef.current?.scaleY(newScaleY);
     }
   };
 
@@ -114,6 +142,7 @@ export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: 
     setScaleX((prev) => -prev); // Toggle between 1 and -1
     if (cropperRef.current) {
       cropperRef.current.scaleX(-scaleX);
+      cropperMaskRef.current?.scaleX(-scaleX);
     }
   };
 
@@ -121,6 +150,7 @@ export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: 
     setScaleY((prev) => -prev); // Toggle between 1 and -1
     if (cropperRef.current) {
       cropperRef.current.scaleY(-scaleY);
+      cropperMaskRef.current?.scaleY(-scaleY);
     }
   };
 
@@ -128,6 +158,11 @@ export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: 
     if (!cropperRef.current) return;
 
     let canvas = cropperRef.current.getCroppedCanvas({
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: "high"
+    });
+
+    let canvasMask = cropperMaskRef.current?.getCroppedCanvas({
       imageSmoothingEnabled: true,
       imageSmoothingQuality: "high"
     });
@@ -140,6 +175,17 @@ export default function CropPopUp({ baseImage, setCroppedImage, setSavedMask }: 
           setCroppedImage(blobUrl);
           // setBaseImage(blobUrl);
           // setBaseImageWithBg(blobUrl);
+        }
+      }, "image/png", 1.0);
+    }
+
+    if (canvasMask) {
+      canvasMask.toBlob((blob) => {
+        if (blob) {
+          const blobUrl = URL.createObjectURL(blob);
+          console.log("Cropped Mask Blob URL:", blobUrl);
+          setSavedMask(blobUrl);
+          console.log("SAVED CANVAS MASK", blobUrl);
         }
       }, "image/png", 1.0);
     }
