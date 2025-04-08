@@ -177,10 +177,11 @@ function App() {
             setBaseImage={setBaseImage} // To update working copy for display
             setSavedMask={setSavedMask} // To save for future bg removal use (within session)
             />
+
             {/* Enhance */}
            <BgColourPopUp 
-             uploadedImage={uploadedImage}
-             setUploadedImage={setUploadedImage}
+            bgRemovedImage={bgRemovedImage || baseImage} 
+            setBgcolorImage={setBaseImage} 
            />  
 
           {/* Download */}
