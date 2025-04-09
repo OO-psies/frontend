@@ -180,12 +180,13 @@ function App() {
           }}
           />
 
-          <Enhance baseImage={baseImage}
-          setEnhanceImage={(enhanced) => {
-            setBaseImage(enhanced); // Update the displayed image
-            setCroppedImage(enhanced);  // Store the cropped version separately
-            setBaseImageWithBg(enhanced) // !Save the cropped version separately for bgremover
-          }}
+          <Enhance 
+            baseImage={baseImage}
+            setEnhancedImage={(enhanced) => {
+              setBaseImage(enhanced); // Update the displayed image
+              setCroppedImage(enhanced);  // Store the cropped version separately
+              setBaseImageWithBg(enhanced) // !Save the cropped version separately for bgremover
+            }}
           />
 
           {/* BG Remover

@@ -27,8 +27,47 @@ export default function Enhance({ baseImage, setEnhancedImage }: EnhanceProps) {
 
   const handleEnhance = () => {
     console.log(`Applying filter: ${selectedFilter}`);
-    setEnhancedImage(baseImage); 
-    setIsOpen(false);
+    console.log("Base image:", baseImage);
+
+    // Create a new canvas and get its 2D context.
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      console.error("Could not get canvas context");
+      return;
+    }
+
+    // Create a new Image to load the base image.
+    const img = new Image();
+    // If your baseImage is hosted from another domain, you may need crossOrigin set.
+    img.crossOrigin = "Anonymous";
+    img.src = baseImage;
+
+    // When the image is loaded, draw it on the canvas with the selected filter.
+    img.onload = () => {
+      // Set canvas dimensions to the image dimensions.
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      // Set the filter on the canvas context.
+      ctx.filter = selectedFilter;
+
+      // Draw the image onto the canvas.
+      ctx.drawImage(img, 0, 0, img.width, img.height);
+
+      // Export the canvas image as a data URL.
+      const enhancedImageUrl = canvas.toDataURL();
+
+      // Pass the filtered image URL back to the parent.
+      setEnhancedImage(enhancedImageUrl);
+      setIsOpen(false);
+    };
+
+    // In case of an image loading error.
+    img.onerror = (error) => {
+      console.error("Error loading image", error);
+    };
   };
 
   return (
