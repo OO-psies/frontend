@@ -1,5 +1,6 @@
 import UploadLogo from "../icons/upload.png";
 import Webcamera from "./Webcamera";
+import { Button } from "@/components/ui/button";
 
 export function UploadArea({ uploadedImage, onImageUpload, }: { uploadedImage: string | null, onImageUpload: (event: React.ChangeEvent<HTMLInputElement>) => void }) {
 
@@ -64,8 +65,9 @@ export function UploadArea({ uploadedImage, onImageUpload, }: { uploadedImage: s
             className="cursor-pointer text-gray-500 hover:text-gray-700 flex flex-col items-center"
           >
             <img src={UploadLogo} alt="Upload Logo" className="w-16 h-16 mb-4" />
-            <p className="text-sm text-gray-500 font-medium">Click to upload</p>
-            <p className="text-xs text-gray-400">PNG or JPG</p>
+            {/* <p className="text-sm text-gray-500 font-medium">Click to upload (PNG or JPG)</p> */}
+            <Button>Click To Upload</Button>
+            {/* <p className="text-xs text-gray-400">PNG or JPG</p> */}
 
             <input
               id="file-upload"
