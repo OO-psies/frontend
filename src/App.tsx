@@ -135,47 +135,70 @@ function App() {
   // (1) Download working image -> baseImage
   const handleDownload = async () => {
     let fileName = prompt("Enter a name for the file")?.trim() || "edited_image";
-
+  
     // ensure filename remains exactly as inputted
     fileName = fileName.replace(/[^a-zA-Z0-9-_]/g, "");
-
+  
     // (??a) prioritize downloading only edited images
     // const imageToDownload = croppedImage || bgRemovedImage || uploadedImage || baseImage;
-
+  
     // (??b) only download working copy
     const imageToDownload = baseImage;
-
+  
     if (!imageToDownload) {
       alert("No image available to download.");
       return;
     }
-
+  
     // fetch the image to convert it into a blob
     const response = await fetch(imageToDownload);
-    const blob = await response.blob();
-
-    try {
-      // use file system access API to let user choose where to save the file
-      const fileHandle = await window.showSaveFilePicker({
-        suggestedName: `${fileName}.png`,
-        types: [
-          {
-            description: "PNG Image",
-            accept: { "image/png": [".png"] }
-          }
-        ]
-      });
-
-      // create a writable stream and write the blob to the file
-      const writableStream = await fileHandle.createWritable();
-      await writableStream.write(blob);
-      await writableStream.close();
-
-      alert("File saved successfully!");
-    } catch (error) {
-      console.error("File save canceled or failed:", error);
-    }
+    const imageBlob = await response.blob();
+  
+    const img = new Image();
+    img.src = URL.createObjectURL(imageBlob);
+  
+    img.onload = async () => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+  
+      // Set the canvas size to the image's size
+      canvas.width = img.width;
+      canvas.height = img.height;
+  
+      // Draw the white background first
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+      // Draw the image on top of the white background
+      ctx.drawImage(img, 0, 0);
+  
+      // Convert the canvas to a blob
+      const newBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+  
+      try {
+        // use file system access API to let user choose where to save the file
+        const fileHandle = await window.showSaveFilePicker({
+          suggestedName: `${fileName}.png`,
+          types: [
+            {
+              description: "PNG Image",
+              accept: { "image/png": [".png"] }
+            }
+          ]
+        });
+  
+        // create a writable stream and write the blob to the file
+        const writableStream = await fileHandle.createWritable();
+        await writableStream.write(newBlob);
+        await writableStream.close();
+  
+        alert("File saved successfully!");
+      } catch (error) {
+        console.error("File save canceled or failed:", error);
+      }
+    };
   };
+  
 
   return (
     <>
@@ -229,12 +252,13 @@ function App() {
           }}
           />
 
-          <Enhance baseImage={baseImage}
-          setEnhanceImage={(enhanced) => {
-            setBaseImage(enhanced); // Update the displayed image
-            setCroppedImage(enhanced);  // Store the cropped version separately
-            setBaseImageWithBg(enhanced) // !Save the cropped version separately for bgremover
-          }}
+          <Enhance 
+            baseImage={baseImage}
+            setEnhancedImage={(enhanced) => {
+              setBaseImage(enhanced); // Update the displayed image
+              setCroppedImage(enhanced);  // Store the cropped version separately
+              setBaseImageWithBg(enhanced) // !Save the cropped version separately for bgremover
+            }}
           />
 
           {/* BG Remover
