@@ -69,6 +69,7 @@ export default function BgColourPopUp({
         ctx.fillStyle = color;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
+
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       setImageLoaded(true);
     };
