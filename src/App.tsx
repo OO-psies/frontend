@@ -7,8 +7,6 @@ import CropPopUp from "./homepage/cropPopUp";
 import Enhance from "./homepage/Enhance";
 import BgRemoverPopUp from "./homepage/BgRemoverPopUp";
 import BgColourPopUp from "./homepage/BgColourPopUp";
-// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./components/ui/tooltip";
-
 
 function App() {
     const [baseImage, setBaseImage] = useState<string | null>(null); // (1) Working image (display, saves all function edits)
@@ -242,21 +240,26 @@ function App() {
                 <div className="flex pt-8 space-x-4">
 
                     {/* Cropper */}
-                    {savedMask ? (
-                        <></>
-                    ) : (
-                        <CropPopUp baseImage={baseImage}
-                            savedMask={savedMask}
-                            setCroppedImage={(cropped) => {
-                                setBaseImage(cropped); // Update the displayed image
-                                setCroppedImage(cropped);  // Store the cropped version separately
-                                setBaseImageWithBg(cropped) // !Save the cropped version separately for bgremover
-                            }}
-                            setSavedMask={(croppedMask) => {
-                                setSavedMask(croppedMask)
-                            }}
-                        />
-                    )}
+                    <CropPopUp baseImage={baseImage}
+                        savedMask={savedMask}
+                        setCroppedImage={(cropped) => {
+                            setBaseImage(cropped); // Update the displayed image
+                            setCroppedImage(cropped);  // Store the cropped version separately
+                            setBaseImageWithBg(cropped) // !Save the cropped version separately for bgremover
+                        }}
+                        setSavedMask={(croppedMask) => {
+                            setSavedMask(croppedMask)
+                        }}
+                    />
+
+                    <Enhance
+                        baseImage={baseImage}
+                        setEnhancedImage={(enhanced) => {
+                            setBaseImage(enhanced); // Update the displayed image
+                            setCroppedImage(enhanced);  // Store the cropped version separately
+                            setBaseImageWithBg(enhanced) // !Save the cropped version separately for bgremover
+                        }}
+                    />
 
                     {/* BG Remover
                         1. baseImage (IN: working image copy for display)
@@ -264,40 +267,19 @@ function App() {
                         3. setBaseImage (OUT: edited image -> to working image copy for display)
                         4. setSavedMask (OUT: latest mask output -> to working mask copy for use next time)
                     */}
-                    {croppedImage ? (
-                        <BgRemoverPopUp
-                            baseImageWithBg={baseImageWithBg} // For bgremover to display as src
-                            savedMask={savedMask}             // For bgremover to display as overlay (if true)
-                            setBaseImage={setBaseImage}       // To update working copy for display
-                            setSavedMask={setSavedMask}       // To save for future bg removal use (within session)
-                        />
-                    ) : (
-                        <></>
-                    )}
-
-                    {/* BG Colour Change */}
-                    {savedMask ? (
-                        <BgColourPopUp
-                            bgRemovedImage={baseImage}
-                            setBgcolorImage={setBaseImage}
-                        />
-                    ) : (
-                        <></>
-                    )}
+                    <BgRemoverPopUp
+                        baseImageWithBg={baseImageWithBg} // For bgremover to display as src
+                        savedMask={savedMask} // For bgremover to display as overlay (if true)
+                        setBaseImage={setBaseImage} // To update working copy for display
+                        setSavedMask={setSavedMask} // To save for future bg removal use (within session)
+                    />
 
                     {/* Enhance */}
-                    {savedMask ? (
-                        <Enhance
-                            baseImage={baseImage}
-                            setEnhancedImage={(enhanced) => {
-                                setBaseImage(enhanced);  // Update the displayed image
-                                setCroppedImage(enhanced);  // Also update the cropped version state
-                                setBaseImageWithBg(enhanced); // For further background removal if needed
-                            }}
-                        />
-                    ) : (
-                        <></>
-                    )}
+                    <BgColourPopUp
+                        bgRemovedImage={baseImage}
+                        setBgcolorImage={setBaseImage}
+
+                    />
 
                     {/* Download */}
                     <Button
