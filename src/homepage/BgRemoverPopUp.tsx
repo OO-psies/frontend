@@ -280,14 +280,16 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
                         }
 
                 {/* Done Button */}
-                <div className="flex justify-end mt-4 gap-2">
-                    <Button onClick={handleBgRemove}>
-                        Touch Up
-                    </Button>
-                    <Button onClick={closeDialog}>
-                        Done
-                    </Button>
-                </div>
+                    <div className="flex justify-end mt-4 gap-2">
+                            <Button onClick={handleBgRemove}
+                            disabled={isLoading}>
+                                Touch Up
+                            </Button>
+                            <Button onClick={closeDialog}
+                            disabled={isLoading}>
+                                Done
+                            </Button>
+                    </div>
             </DialogHeader>
             </DialogContent>
         </Dialog>
