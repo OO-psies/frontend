@@ -242,17 +242,21 @@ function App() {
                 <div className="flex pt-8 space-x-4">
 
                     {/* Cropper */}
-                    <CropPopUp baseImage={baseImage}
-                        savedMask={savedMask}
-                        setCroppedImage={(cropped) => {
-                            setBaseImage(cropped); // Update the displayed image
-                            setCroppedImage(cropped);  // Store the cropped version separately
-                            setBaseImageWithBg(cropped) // !Save the cropped version separately for bgremover
-                        }}
-                        setSavedMask={(croppedMask) => {
-                            setSavedMask(croppedMask)
-                        }}
-                    />
+                    {savedMask ? (
+                        <></>
+                    ) : (
+                        <CropPopUp baseImage={baseImage}
+                            savedMask={savedMask}
+                            setCroppedImage={(cropped) => {
+                                setBaseImage(cropped); // Update the displayed image
+                                setCroppedImage(cropped);  // Store the cropped version separately
+                                setBaseImageWithBg(cropped) // !Save the cropped version separately for bgremover
+                            }}
+                            setSavedMask={(croppedMask) => {
+                                setSavedMask(croppedMask)
+                            }}
+                        />
+                    )}
 
                     {/* BG Remover
                         1. baseImage (IN: working image copy for display)
