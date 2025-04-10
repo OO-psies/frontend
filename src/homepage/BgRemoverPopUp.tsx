@@ -75,7 +75,7 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
         return `data:image/png;base64,${base64}`;
     }
     // Helper (F2) - Converts Image URL to Base64
-    const convertToBase64 = async (image: File | string): Promise<string> => {
+    const convertToBase64 = async (image: File | string | null): Promise<string> => {
 
         // (2.1) if image null
         if (!image) {
@@ -152,6 +152,7 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
             console.log("Initial bg remove result>>>", dataResult)
 
             setImageMask(dataMask); // mask for display overlay
+            console.log("new ImageMaskSet", imageMask)
             loadBgRemovedImage(dataResult); 
 
         } catch (error) {
@@ -168,18 +169,29 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
 
         setIsLoading(true);
 
+        // convert supplement mask to base64
+        const convertedSuppStrokeMask = toStrokeMask(strokeCanvas.current);
+        setSupplementMask(convertedSuppStrokeMask);
+        console.log("Just the strokes *>>>", convertedSuppStrokeMask);
+        console.log("supplementMask Check *>>>", supplementMask);
+
         const base64Image = await convertToBase64(baseImageWithBg);
-        // console.log("baseImageWithBg for touch up")
+        console.log("baseImageWithBg for touch up")
         // console.log(baseImageWithBg)
-        // console.log(base64Image);
-        const base64NewMask = await convertToBase64(supplementMask)
-        // console.log("supplementMask for touch up")
+        console.log(base64Image);
+        console.log("data:image/png;base64," + base64Image)
+
+        const base64NewMask = await convertToBase64(convertedSuppStrokeMask)
+        console.log("supplementMask for touch up")
         // console.log(supplementMask)
-        // console.log(base64NewMask);
+        console.log(base64NewMask);
+        console.log("data:image/png;base64," + base64NewMask)
+
         const base64CurrentMask = await convertToBase64(imageMask)
-        // console.log("imageMask for touch up")
+        console.log("imageMask for touch up")
         // console.log(imageMask)
-        // console.log(base64CurrentMask)
+        console.log(base64CurrentMask)
+        console.log("data:image/png;base64," + base64CurrentMask)
 
         try {
         const response = await fetch(
@@ -217,14 +229,9 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
 
     // Event 2 - Calls F2, affects F4 (converts and calls F4 for sending to BE to touchup)
     const handleBgRemove = async () => {
-        // Calls F2
-        const convertedStrokeMask = toStrokeMask(strokeCanvas.current);
-        setSupplementMask(convertedStrokeMask);
-        console.log("Just the strokes >>>", convertedStrokeMask);
 
         // Calls F4
         handleTouchUp();
-        // console.log("Mask >>>", toMask(canvas.current)); // not in use
     }
 
     // Event 3 - Sets latest imageMask -> savedMask and latest bgRemovedImage -> baseImage Closes Dialog
@@ -247,8 +254,8 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
             <DialogHeader>
                 <DialogTitle>Remove your background</DialogTitle>
                 <DialogDescription className="pb-4">
-                Use the brush to clean your background.<br />
-                Or click on the areas you want to clean
+                To Erase: Click on mouse and drag around<br />
+                To Restore: Hold on "Shift" key + Click on mouse and drag around
                 </DialogDescription>
 
                 {/* Cropping Image */}

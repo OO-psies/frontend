@@ -10,7 +10,7 @@ import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
 
 interface CropPopUpProps {
   baseImage: string;
-  savedMask: string | null;
+  savedMask: string;
   setCroppedImage: (image: string | null) => void;
   setSavedMask: (image: string | null) => void;
 }
@@ -27,6 +27,67 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
   const [scaleY, setScaleY] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+
+//   const convertToBase64 = async (image: File | string): Promise<string> => {
+
+//     // (2.1) if image null
+//     if (!image) {
+//         console.log("image does not exist");
+//     }
+
+//     // (2.2) if typeof(image) == string
+//     if (typeof(image) === 'string') {
+//         let file: File;
+//         const response = await fetch(image);
+//         const blob = await response.blob();
+//         file = new File([blob], "image.png", { type: blob.type });
+
+//         return new Promise((resolve, reject) => {
+//             const reader = new FileReader();
+//             reader.readAsDataURL(file); // Read file as Base64
+//             reader.onload = () => {
+//                 const base64String = reader.result as string;
+//                 // Remove the 'data:image/<file-type>;base64,' prefix if present
+//                 const base64Data = base64String.split(",")[1];
+//                 resolve(base64Data); // This gives you just the base64 part
+//             };
+//             reader.onerror = (error) => reject(error);
+//         });
+//     }
+
+//     // (2.3) if typeof(image) == file
+//     return new Promise((resolve, reject) => {
+//         const reader = new FileReader();
+//         reader.readAsDataURL(image); // Read file as Base64
+//         reader.onload = () => {
+//             const base64String = reader.result as string;
+//             // Remove the 'data:image/<file-type>;base64,' prefix if present
+//             const base64Data = base64String.split(",")[1];
+//             resolve(base64Data); // This gives you just the base64 part
+//         };
+//         reader.onerror = (error) => reject(error);
+//     });
+// }
+
+  // const check = convertToBase64(baseImage);
+  // const check2 = convertToBase64(savedMask);
+
+  // console.log("What is being loaded>>>", check);
+  // console.log("What is being loaded>>>", check2);
+
+  const img = new Image();
+  img.crossOrigin = "anonymous"; // Needed if the image is from another domain
+  img.src = savedMask; // load the mask
+
+  img.onload = () => {
+    // proceed to step 2
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    const ctx = canvas.getContext("2d");
+    ctx?.drawImage(img, 0, 0);
+  };
 
   useEffect(() => {
     if (!isOpen) {
