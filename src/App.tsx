@@ -169,6 +169,11 @@ function App() {
                     );
                     if (warningElement) {
                         warningElement.style.display = "flex";
+
+                        // Hide warning after 5 seconds
+                        setTimeout(() => {
+                            warningElement.style.display = "none";
+                        }, 5000); // 5000ms = 5 seconds
                     }
                 } else {
                     // Hide warning if it exists
@@ -303,7 +308,7 @@ function App() {
                         ensure that the photo is close to the camera and clear.
                     </p>
                 </div>
-                
+
                 {/* Button Options */}
                 <div className="flex pt-8 space-x-4">
 
