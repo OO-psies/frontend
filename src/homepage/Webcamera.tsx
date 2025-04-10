@@ -45,7 +45,7 @@ const Webcamera = ({ onCapture }: { onCapture: (image: string) => void }) => {
         <div className="">
             <Dialog>
                 <DialogTrigger asChild>
-                    <Button className="mt-3"> Take photo </Button>
+                    <Button className="mt-3 text-xs"> Take photo </Button>
                 </DialogTrigger>
 
                 <DialogContent>
