@@ -14,6 +14,7 @@ function App() {
     const [uploadedImage, setUploadedImage] = useState<string | null>(null); // (2) Original image (backup)
     const [baseImageWithBg, setBaseImageWithBg] = useState<string | null>(null); // (3) Working copy image for bgremover (saves all image edits except bgremove)
     const [savedMask, setSavedMask] = useState<string | null>(null); // (4) Working copy mask for bgremover (saves all mask edits from bgremove)
+    const [bgEdited, setBgEdited] = useState<Boolean>(false)
 
     // (!) Do we need this
     const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
@@ -335,7 +336,7 @@ function App() {
                         3. setBaseImage (OUT: edited image -> to working image copy for display)
                         4. setSavedMask (OUT: latest mask output -> to working mask copy for use next time)
                     */}
-                    {croppedImage ? (
+                    {croppedImage && !bgEdited ? (
                         <BgRemoverPopUp
                             baseImageWithBg={baseImageWithBg} // For bgremover to display as src
                             savedMask={savedMask}             // For bgremover to display as overlay (if true)
@@ -350,7 +351,10 @@ function App() {
                     {savedMask ? (
                         <BgColourPopUp
                             bgRemovedImage={baseImage}
-                            setBgcolorImage={setBaseImage}
+                            setBgcolorImage={(img) => {
+                                setBaseImage(img); // Update the displayed image
+                                setBgEdited(true); // Disable Remove BG button
+                           }}
                         />
                     ) : (
                         <></>
@@ -364,6 +368,7 @@ function App() {
                                 setBaseImage(enhanced);  // Update the displayed image
                                 setCroppedImage(enhanced);  // Also update the cropped version state
                                 setBaseImageWithBg(enhanced); // For further background removal if needed
+                                setBgEdited(true)
                             }}
                         />
                     ) : (
