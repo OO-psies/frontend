@@ -235,6 +235,7 @@ function App() {
           </div>
 
         </div>
+        
 
         {/* Button Options */}
         <div className="flex pt-8 space-x-4">
@@ -276,8 +277,9 @@ function App() {
 
             {/* Enhance */}
            <BgColourPopUp 
-            bgRemovedImage={bgRemovedImage || baseImage} 
+            bgRemovedImage={baseImage} 
             setBgcolorImage={setBaseImage} 
+            
            />  
 
           {/* Download */}
