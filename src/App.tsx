@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import "./App.css";
@@ -16,7 +17,7 @@ function App() {
 
     // (!) Do we need this
     const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
-    const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image 
+    const [bgRemovedImage, setBgRemovedImage] = useState<string | null>(null); // Stores bg removed image
     const [imageFile, setImageFile] = useState<File | null>(null); // Store actual file
 
     // (!) Testing Mask Canvas
@@ -107,6 +108,7 @@ function App() {
     // };
 
     // (0) Upload Image -> baseImage (working copy) + uploadedImage (untouched copy)
+    // (0) Upload Image -> baseImage (working copy) + uploadedImage (untouched copy)
     const handleImageUpload = async (
         event: React.ChangeEvent<HTMLInputElement>
     ) => {
@@ -114,9 +116,6 @@ function App() {
 
         if (file) {
             const imageUrl = URL.createObjectURL(file);
-            // (*)
-            // console.log("The image pre conversion >>>", imageUrl)
-            // handleImageCheck(imageUrl);
 
             setBaseImage(imageUrl);
             setUploadedImage(imageUrl);
@@ -126,14 +125,70 @@ function App() {
             setCroppedImage(null); // Reset cropped image when new image is uploaded
             setBgRemovedImage(null); // Reset bg removed image when new image is uploaded
 
+            // Check passport compliance in the background
+            checkFaceValidity(file);
         } else {
             setUploadedImage(null);
         }
     };
 
+    // Simplified function to check face validity and display warning
+    const checkFaceValidity = async (file: File) => {
+        try {
+            // Convert file to base64
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+
+            reader.onload = async () => {
+                const base64String = reader.result as string;
+                const base64Data = base64String.split(",")[1];
+
+                // Send to face detector API
+                const response = await fetch(
+                    "http://localhost:8080/api/edit-image/face-detector",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            base64Image: base64Data,
+                        }),
+                    }
+                );
+
+                const responseData = await response.json();
+                const isValid = responseData.faceDetected;
+                console.log("Face validity check:", isValid);
+
+                // Show appropriate warning based on result
+                if (isValid === false) {
+                    // Display warning
+                    const warningElement = document.getElementById(
+                        "face-validity-warning"
+                    );
+                    if (warningElement) {
+                        warningElement.style.display = "flex";
+                    }
+                } else {
+                    // Hide warning if it exists
+                    const warningElement = document.getElementById(
+                        "face-validity-warning"
+                    );
+                    if (warningElement) {
+                        warningElement.style.display = "none";
+                    }
+                }
+            };
+        } catch (error) {
+            console.error("Error checking face validity:", error);
+        }
+    };
+
     // (1) Download working image -> baseImage
     const handleDownload = async () => {
-        let fileName = prompt("Enter a name for the file")?.trim() || "edited_image";
+        let fileName =
+            prompt("Enter a name for the file")?.trim() || "edited_image";
 
         // ensure filename remains exactly as inputted
         fileName = fileName.replace(/[^a-zA-Z0-9-_]/g, "");
@@ -172,7 +227,9 @@ function App() {
             ctx.drawImage(img, 0, 0);
 
             // Convert the canvas to a blob
-            const newBlob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
+            const newBlob = await new Promise((resolve) =>
+                canvas.toBlob(resolve, "image/png")
+            );
 
             try {
                 // use file system access API to let user choose where to save the file
@@ -181,9 +238,9 @@ function App() {
                     types: [
                         {
                             description: "PNG Image",
-                            accept: { "image/png": [".png"] }
-                        }
-                    ]
+                            accept: { "image/png": [".png"] },
+                        },
+                    ],
                 });
 
                 // create a writable stream and write the blob to the file
@@ -197,7 +254,6 @@ function App() {
             }
         };
     };
-
 
     return (
         <>
@@ -229,13 +285,25 @@ function App() {
 
                         {croppedImage && (
                             <p className="text-gray-600 mt-2">Original Image</p>
-
                         )}
                     </div>
-
                 </div>
 
-
+                {/* Warning Message - Hidden by default */}
+                <div
+                    id="face-validity-warning"
+                    style={{ display: "none" }}
+                    className="w-full max-w-[800px] mt-4 mb-4 bg-red-50 border border-red-200 text-red-800 rounded-md p-4 flex items-center gap-2"
+                >
+                    <div className="h-5 w-5 rounded-full bg-red-500 text-white flex items-center justify-center text-xs font-bold">
+                        !
+                    </div>
+                    <p>
+                        Warning: This image does not appear to be passport compliant. Please
+                        ensure that the photo is close to the camera and clear.
+                    </p>
+                </div>
+                
                 {/* Button Options */}
                 <div className="flex pt-8 space-x-4">
 
