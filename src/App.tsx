@@ -193,6 +193,9 @@ function App() {
 
     // (1) Download working image -> baseImage
     const handleDownload = async () => {
+         // fetch the image to convert it into a blob
+        const response = await fetch(imageToDownload);
+        const imageBlob = await response.blob();
         let fileName =
             prompt("Enter a name for the file")?.trim() || "edited_image";
 
@@ -210,9 +213,7 @@ function App() {
             return;
         }
 
-        // fetch the image to convert it into a blob
-        const response = await fetch(imageToDownload);
-        const imageBlob = await response.blob();
+       
 
         const img = new Image();
         img.src = URL.createObjectURL(imageBlob);
