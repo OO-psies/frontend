@@ -13,12 +13,11 @@ import { strict } from "node:assert";
 interface BgRemoverPopUpProps {
     baseImageWithBg: string | null;
     savedMask: string | null;
-    handleBgRemoval: (bgRemovedImage: string | null, savedMask: string | null) => void;
-    // setBaseImage: (image: string | null) => void;
-    // setSavedMask: (image: string | null) => void;
+    setBaseImage: (image: string | null) => void;
+    setSavedMask: (image: string | null) => void;
   }
 
-export default function BgRemoverPopUp({ baseImageWithBg, savedMask, handleBgRemoval }: BgRemoverPopUpProps){
+export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImage, setSavedMask }: BgRemoverPopUpProps){
     // flag markers
     const [isOpen, setIsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -230,9 +229,8 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, handleBgRem
 
     // Event 3 - Sets latest imageMask -> savedMask and latest bgRemovedImage -> baseImage Closes Dialog
     const closeDialog = (() => {
-        handleBgRemoval(bgRemovedImage, imageMask)
-        // setBaseImage(bgRemovedImage);
-        // setSavedMask(imageMask);
+        setBaseImage(bgRemovedImage);
+        setSavedMask(imageMask);
         setIsOpen(false);
     })
 
