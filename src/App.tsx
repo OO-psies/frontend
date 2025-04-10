@@ -39,6 +39,74 @@ function App() {
   //   }
   // };
 
+  // (*) - for checking image's validity for passport
+//   const convertToBase64 = async (image: File | string): Promise<string> => {
+
+//     // (2.1) if image null
+//     if (!image) {
+//         console.log("image does not exist");
+//     }
+
+//     // (2.2) if typeof(image) == string
+//     if (typeof(image) === 'string') {
+//         let file: File;
+//         const response = await fetch(image);
+//         const blob = await response.blob();
+//         file = new File([blob], "image.png", { type: blob.type });
+
+//         return new Promise((resolve, reject) => {
+//             const reader = new FileReader();
+//             reader.readAsDataURL(file); // Read file as Base64
+//             reader.onload = () => {
+//                 const base64String = reader.result as string;
+//                 // Remove the 'data:image/<file-type>;base64,' prefix if present
+//                 const base64Data = base64String.split(",")[1];
+//                 resolve(base64Data); // This gives you just the base64 part
+//             };
+//             reader.onerror = (error) => reject(error);
+//         });
+//     }
+
+//     // (2.3) if typeof(image) == file
+//     return new Promise((resolve, reject) => {
+//         const reader = new FileReader();
+//         reader.readAsDataURL(image); // Read file as Base64
+//         reader.onload = () => {
+//             const base64String = reader.result as string;
+//             // Remove the 'data:image/<file-type>;base64,' prefix if present
+//             const base64Data = base64String.split(",")[1];
+//             resolve(base64Data); // This gives you just the base64 part
+//         };
+//         reader.onerror = (error) => reject(error);
+//     });
+// }
+
+//   const handleImageCheck = async (image: any) => {
+//     const base64Image = await convertToBase64(image);
+//     console.log("The image post conversion >>>", base64Image)
+
+//     try {
+//     const response = await fetch(
+//         "http://localhost:8080/api/edit-image/face-detector",
+//         {
+//         method: "POST",
+//         headers: {
+//             "Content-Type": "application/json", // Set the content type to JSON
+//         },
+//         body: JSON.stringify({
+//             base64Image: base64Image,
+//         }),
+//         }
+//     );
+//         const data = await response.json();
+//         console.log("Server Response:", data);
+
+//     } catch (error) {
+//     console.error("Upload failed:", error);
+//     }
+
+// };
+
   // (0) Upload Image -> baseImage (working copy) + uploadedImage (untouched copy)
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -47,6 +115,10 @@ function App() {
 
     if (file) {
       const imageUrl = URL.createObjectURL(file);
+      // (*)
+      // console.log("The image pre conversion >>>", imageUrl)
+      // handleImageCheck(imageUrl);
+
       setBaseImage(imageUrl); 
       setUploadedImage(imageUrl); 
       setBaseImageWithBg(imageUrl);
@@ -163,6 +235,7 @@ function App() {
           </div>
 
         </div>
+        
 
         {/* Button Options */}
         <div className="flex pt-8 space-x-4">
@@ -204,8 +277,9 @@ function App() {
 
             {/* Enhance */}
            <BgColourPopUp 
-            bgRemovedImage={bgRemovedImage || baseImage} 
+            bgRemovedImage={baseImage} 
             setBgcolorImage={setBaseImage} 
+            
            />  
 
           {/* Download */}
