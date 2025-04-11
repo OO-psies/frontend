@@ -9,319 +9,321 @@ import { Button } from "@/components/ui/button";
 import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
 
 interface CropPopUpProps {
-  baseImage: string;
-  savedMask: string | null;
-  setCroppedImage: (image: string | null) => void;
-  setSavedMask: (image: string | null) => void;
+    baseImage: string;
+    savedMask: string | null;
+    setCroppedImage: (image: string | null) => void;
+    setSavedMask: (image: string | null) => void;
 }
 
 export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSavedMask }: CropPopUpProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const imageRef = useRef<HTMLImageElement | null>(null);
-  const maskRef = useRef<HTMLImageElement | null>(null); // ! for mask
-  const cropperRef = useRef<Cropper | null>(null);
-  const cropperMaskRef = useRef<Cropper | null>(null); // ! for mask
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const [scaleX, setScaleX] = useState(1);
-  const [scaleY, setScaleY] = useState(1);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+    const [isOpen, setIsOpen] = useState(false);
+    const imageRef = useRef<HTMLImageElement | null>(null);
+    const maskRef = useRef<HTMLImageElement | null>(null); // for mask
+    const cropperRef = useRef<Cropper | null>(null);
+    const cropperMaskRef = useRef<Cropper | null>(null); // for mask
+    const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [scaleX, setScaleX] = useState(1);
+    const [scaleY, setScaleY] = useState(1);
+    const [zoomLevel, setZoomLevel] = useState(1);
+    const [aspectRatio, setAspectRatio] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (!isOpen) {
-      setImageLoaded(false);
-      setSelectedCountry(null);
-      setZoomLevel(1);
-      setScaleX(1);
-      setScaleY(1);
-      setAspectRatio(null)
-    }
-  }, [isOpen]);
+    useEffect(() => {
+        if (!isOpen) {
+            setImageLoaded(false);
+            setSelectedCountry(null);
+            setZoomLevel(1);
+            setScaleX(1);
+            setScaleY(1);
+            setAspectRatio(null);
+        }
+    }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen && imageLoaded && imageRef.current) {
-      console.log("Initializing Cropper...");
-      if (cropperRef.current) {
-        cropperRef.current.destroy();
-      }
+    useEffect(() => {
+        if (isOpen && imageLoaded && imageRef.current) {
+            console.log("Initializing Cropper...");
+            if (cropperRef.current) {
+                cropperRef.current.destroy();
+            }
 
-      cropperRef.current = new Cropper(imageRef.current, {
-        autoCropArea: 1,
-        viewMode: 1,
-        dragMode: "crop",
-        responsive: true,
-        zoomable: true,
-        background: false,
-        aspectRatio: aspectRatio || NaN,
-      });
+            cropperRef.current = new Cropper(imageRef.current, {
+                autoCropArea: 1,
+                viewMode: 1,
+                dragMode: "crop",
+                responsive: true,
+                zoomable: true,
+                wheelZoom: false, // Disable scroll to zoom
+                background: false,
+                aspectRatio: aspectRatio || NaN,
+            });
 
-      console.log("Cropper initialized.");
-    }
+            console.log("Cropper initialized.");
+        }
 
-    // ! for mask
-    if (isOpen && savedMask && maskRef.current) {
-      console.log("Initializing Cropper for mask...");
-      if (cropperMaskRef.current) {
-        cropperMaskRef.current.destroy();
-      }
+        // for mask
+        if (isOpen && savedMask && maskRef.current) {
+            console.log("Initializing Cropper for mask...");
+            if (cropperMaskRef.current) {
+                cropperMaskRef.current.destroy();
+            }
 
-      cropperMaskRef.current = new Cropper(maskRef.current, {
-        autoCropArea: 1,
-        viewMode: 1,
-        dragMode: "crop",
-        responsive: true,
-        zoomable: true,
-        background: false,
-        aspectRatio: aspectRatio || NaN,
-      });
+            cropperMaskRef.current = new Cropper(maskRef.current, {
+                autoCropArea: 1,
+                viewMode: 1,
+                dragMode: "crop",
+                responsive: true,
+                zoomable: true,
+                wheelZoom: false, // Disable scroll to zoom for mask
+                background: false,
+                aspectRatio: aspectRatio || NaN,
+            });
 
-      console.log("Cropper for mask initialized.");
-    }
+            console.log("Cropper for mask initialized.");
+        }
 
-    return () => {
-      cropperRef.current?.destroy();
-      cropperRef.current = null;
+        return () => {
+            cropperRef.current?.destroy();
+            cropperRef.current = null;
+        };
+    }, [isOpen, imageLoaded]);
+
+    const handleCountryChange = (country: string) => {
+        setSelectedCountry(country);
+
+        if (!cropperRef.current) return;
+
+        const dimensions = IDSizeByCountry[country as keyof typeof IDSizeByCountry];
+        if (dimensions) {
+            console.log(`Auto-cropping to ${dimensions.width}x${dimensions.height} ${dimensions.unit}`);
+            const aspectRatio = dimensions.width / dimensions.height;
+            cropperRef.current.setAspectRatio(aspectRatio);
+            cropperMaskRef.current?.setAspectRatio(aspectRatio);
+        }
     };
-  }, [isOpen, imageLoaded]);
 
-  const handleCountryChange = (country: string) => {
-    setSelectedCountry(country);
-  
-    if (!cropperRef.current) return;
-  
-    const dimensions = IDSizeByCountry[country as keyof typeof IDSizeByCountry];
-    if (dimensions) {
-      console.log(`Auto-cropping to ${dimensions.width}x${dimensions.height} ${dimensions.unit}`);
-      const aspectRatio = dimensions.width / dimensions.height;
-      cropperRef.current.setAspectRatio(aspectRatio);
-      cropperMaskRef.current?.setAspectRatio(aspectRatio);
-    }
-  };
-
-  const handleAspectRatioChange = (ratio: string) => {
-    let newRatio: number | null = null;
-    if (ratio !== "free") {
-      newRatio = parseFloat(ratio);
-    }
-    setAspectRatio(newRatio);
-    if (cropperRef.current) {
-      cropperRef.current.setAspectRatio(newRatio || NaN);
-      cropperMaskRef.current?.setAspectRatio(newRatio || NaN);
-    }
-  };
-
-  const handleZoomChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newZoom = parseFloat(event.target.value);
-    setZoomLevel(newZoom);
-    if (cropperRef.current) {
-      cropperRef.current.zoomTo(newZoom);
-      cropperMaskRef.current?.zoomTo(newZoom);
-    }
-  };
-
-  const handleScaleXChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newScaleX = parseFloat(event.target.value);
-    setScaleX(newScaleX);
-    if (cropperRef.current) {
-      cropperRef.current.scaleX(newScaleX);
-      cropperMaskRef.current?.scaleX(newScaleX);
-    }
-  };
-
-  const handleScaleYChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const newScaleY = parseFloat(event.target.value);
-    setScaleY(newScaleY);
-    if (cropperRef.current) {
-      cropperRef.current.scaleY(newScaleY);
-      cropperMaskRef.current?.scaleY(newScaleY);
-    }
-  };
-
-  const handleFlipHorizontal = () => {
-    setScaleX((prev) => -prev); // Toggle between 1 and -1
-    if (cropperRef.current) {
-      cropperRef.current.scaleX(-scaleX);
-      cropperMaskRef.current?.scaleX(-scaleX);
-    }
-  };
-
-  const handleFlipVertical = () => {
-    setScaleY((prev) => -prev); // Toggle between 1 and -1
-    if (cropperRef.current) {
-      cropperRef.current.scaleY(-scaleY);
-      cropperMaskRef.current?.scaleY(-scaleY);
-    }
-  };
-
-  const handleCrop = () => {
-    if (!cropperRef.current) return;
-
-    let canvas = cropperRef.current.getCroppedCanvas({
-      imageSmoothingEnabled: true,
-      imageSmoothingQuality: "high"
-    });
-
-    let canvasMask = cropperMaskRef.current?.getCroppedCanvas({
-      imageSmoothingEnabled: true,
-      imageSmoothingQuality: "high"
-    });
-
-    if (canvas) {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const blobUrl = URL.createObjectURL(blob);
-          console.log("Cropped Image Blob URL:", blobUrl);
-          setCroppedImage(blobUrl);
-          // setBaseImage(blobUrl);
-          // setBaseImageWithBg(blobUrl);
+    const handleAspectRatioChange = (ratio: string) => {
+        let newRatio: number | null = null;
+        if (ratio !== "free") {
+            newRatio = parseFloat(ratio);
         }
-      }, "image/png", 1.0);
-    }
-
-    if (canvasMask) {
-      canvasMask.toBlob((blob) => {
-        if (blob) {
-          const blobUrl = URL.createObjectURL(blob);
-          console.log("Cropped Mask Blob URL:", blobUrl);
-          setSavedMask(blobUrl);
-          console.log("SAVED CANVAS MASK", blobUrl);
+        setAspectRatio(newRatio);
+        if (cropperRef.current) {
+            cropperRef.current.setAspectRatio(newRatio || NaN);
+            cropperMaskRef.current?.setAspectRatio(newRatio || NaN);
         }
-      }, "image/png", 1.0);
-    }
+    };
 
-    setIsOpen(false);
-  };
+    const handleZoomChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newZoom = parseFloat(event.target.value);
+        setZoomLevel(newZoom);
+        if (cropperRef.current) {
+            cropperRef.current.zoomTo(newZoom);
+            cropperMaskRef.current?.zoomTo(newZoom);
+        }
+    };
 
-  return (
-    <>
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogTrigger asChild>
-          <Button disabled={!baseImage || baseImage === null} onClick={() => setIsOpen(true)}>
-            <Crop /> Crop & Resize
-          </Button>
-        </DialogTrigger>
+    const handleScaleXChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newScaleX = parseFloat(event.target.value);
+        setScaleX(newScaleX);
+        if (cropperRef.current) {
+            cropperRef.current.scaleX(newScaleX);
+            cropperMaskRef.current?.scaleX(newScaleX);
+        }
+    };
 
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adjust & Crop Your Image</DialogTitle>
-            <DialogDescription className="pb-4">
-              Use the sliders to zoom, stretch, or flip your image.<br />
-              Or Select A Country for Auto-Cropping
-            </DialogDescription>
+    const handleScaleYChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const newScaleY = parseFloat(event.target.value);
+        setScaleY(newScaleY);
+        if (cropperRef.current) {
+            cropperRef.current.scaleY(newScaleY);
+            cropperMaskRef.current?.scaleY(newScaleY);
+        }
+    };
 
-            {/* Cropping Image */}
-            <div>
-              <img 
-                ref={imageRef} 
-                src={baseImage} 
-                alt="To Crop" 
-                style={{ maxWidth: "100%", display: "block" }} 
-                onLoad={() => setImageLoaded(true)}
-              />
-            </div>
+    const handleFlipHorizontal = () => {
+        setScaleX((prev) => -prev); // Toggle between 1 and -1
+        if (cropperRef.current) {
+            cropperRef.current.scaleX(-scaleX);
+            cropperMaskRef.current?.scaleX(-scaleX);
+        }
+    };
 
-            <div className="flex gap-3">
-              {/* Country Selection */}
-              <div className="mt-4">
-                <Select onValueChange={handleCountryChange}>
-                  <SelectTrigger className="w-[180px]">
-                    <div className="flex items-center space-x-2">
-                      <Globe className="w-5 h-5 text-gray-500" />
-                      <SelectValue placeholder="Country" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(IDSizeByCountry).map((country) => (
-                      <SelectItem key={country} value={country}>
-                        {country}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* handle aspect ratio */}
-              <div className="mt-4">
-                <Select onValueChange={handleAspectRatioChange}>
-                  <SelectTrigger className="w-[180px]">
-                    <div className="flex items-center space-x-2">
-                      <SelectValue placeholder="Aspect Ratio" />
-                    </div>
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1:1 (Square)</SelectItem>
-                    <SelectItem value="0.5625">9:16 (Widescreen)</SelectItem>
-                    <SelectItem value="0.75">3:4 (Standard)</SelectItem>
-                    <SelectItem value="free">Freeform</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+    const handleFlipVertical = () => {
+        setScaleY((prev) => -prev); // Toggle between 1 and -1
+        if (cropperRef.current) {
+            cropperRef.current.scaleY(-scaleY);
+            cropperMaskRef.current?.scaleY(-scaleY);
+        }
+    };
 
-            {/* Zoom Slider */}
-            <div className="mt-4 flex items-center">
-              <label className="text-sm w-20">Zoom</label>
-              <input
-                type="range"
-                min="0.5"
-                max="3"
-                step="0.01"
-                value={zoomLevel}
-                onChange={handleZoomChange}
-                className="mt-2 flex-grow "
-              />
-            </div>
+    const handleCrop = () => {
+        if (!cropperRef.current) return;
 
-            {/* Scale X Slider */}
-            <div className="mt-4 flex items-center">
-              <label className="text-sm w-20">Scale X</label>
-              <input
-                type="range"
-                min="0.5"
-                max="2"
-                step="0.01"
-                value={scaleX}
-                onChange={handleScaleXChange}
-                className="mt-2 flex-grow "
-              />
-            </div>
+        let canvas = cropperRef.current.getCroppedCanvas({
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: "high",
+        });
 
-            {/* Scale Y Slider */}
-            <div className="mt-4 flex items-center">
-              <label className="text-sm w-20">Scale Y</label>
-              <input
-                type="range"
-                min="0.5"
-                max="2"
-                step="0.01"
-                value={scaleY}
-                onChange={handleScaleYChange}
-                className="mt-2 flex-grow "
-              />
-            </div>
+        let canvasMask = cropperMaskRef.current?.getCroppedCanvas({
+            imageSmoothingEnabled: true,
+            imageSmoothingQuality: "high",
+        });
 
-            {/* Flip Buttons */}
-            <div className="mt-4 p-6 flex justify-center gap-4">
-              <Button variant="outline" onClick={handleFlipHorizontal} className="bg-blue-500 text-white">
-                <FlipHorizontal className="w-5 h-5" /> Flip Horizontally
-              </Button>
-              <Button variant="outline" onClick={handleFlipVertical} className="bg-blue-500 text-white">
-                <FlipVertical className="w-5 h-5" /> Flip Vertically
-              </Button>
-            </div>
+        if (canvas) {
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    const blobUrl = URL.createObjectURL(blob);
+                    console.log("Cropped Image Blob URL:", blobUrl);
+                    setCroppedImage(blobUrl);
+                }
+            }, "image/png", 1.0);
+        }
 
-            <div className="flex justify-end mt-4">
-              <Button className="bg-red-500 hover:bg-red-400 mx-3" onClick={() => setIsOpen(false)}>
-                Close
-              </Button>
-              <Button onClick={handleCrop}>
-                Done
-              </Button>
-            </div>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+        if (canvasMask) {
+            canvasMask.toBlob((blob) => {
+                if (blob) {
+                    const blobUrl = URL.createObjectURL(blob);
+                    console.log("Cropped Mask Blob URL:", blobUrl);
+                    setSavedMask(blobUrl);
+                    console.log("SAVED CANVAS MASK", blobUrl);
+                }
+            }, "image/png", 1.0);
+        }
+
+        setIsOpen(false);
+    };
+
+    return (
+        <>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogTrigger asChild>
+                    <Button disabled={!baseImage || baseImage === null} onClick={() => setIsOpen(true)}>
+                        <Crop /> Crop & Resize
+                    </Button>
+                </DialogTrigger>
+
+                {/* Make the dialog content scrollable with a max height */}
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Adjust & Crop Your Image</DialogTitle>
+                        <DialogDescription className="pb-4">
+                            Use the sliders to zoom, stretch, or flip your image.
+                            <br />
+                            Or Select A Country for Auto-Cropping
+                        </DialogDescription>
+
+                        {/* Cropping Image */}
+                        <div>
+                            <img
+                                ref={imageRef}
+                                src={baseImage}
+                                alt="To Crop"
+                                style={{ maxWidth: "100%", maxHeight: "70vh", display: "block", objectFit: "contain" }}
+                                onLoad={() => setImageLoaded(true)}
+                            />
+                        </div>
+
+                        <div className="flex gap-3">
+                            {/* Country Selection */}
+                            <div className="mt-4">
+                                <Select onValueChange={handleCountryChange}>
+                                    <SelectTrigger className="w-[180px]">
+                                        <div className="flex items-center space-x-2">
+                                            <Globe className="w-5 h-5 text-gray-500" />
+                                            <SelectValue placeholder="Country" />
+                                        </div>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.keys(IDSizeByCountry).map((country) => (
+                                            <SelectItem key={country} value={country}>
+                                                {country}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {/* Aspect Ratio Selection */}
+                            <div className="mt-4">
+                                <Select onValueChange={handleAspectRatioChange}>
+                                    <SelectTrigger className="w-[180px]">
+                                        <div className="flex items-center space-x-2">
+                                            <SelectValue placeholder="Aspect Ratio" />
+                                        </div>
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="1">1:1 (Square)</SelectItem>
+                                        <SelectItem value="0.5625">9:16 (Widescreen)</SelectItem>
+                                        <SelectItem value="0.75">3:4 (Standard)</SelectItem>
+                                        <SelectItem value="free">Freeform</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        {/* Zoom Slider */}
+                        <div className="mt-4 flex items-center">
+                            <label className="text-sm w-20">Zoom</label>
+                            <input
+                                type="range"
+                                min="0.5"
+                                max="3"
+                                step="0.01"
+                                value={zoomLevel}
+                                onChange={handleZoomChange}
+                                className="mt-2 flex-grow"
+                            />
+                        </div>
+
+                        {/* Scale X Slider */}
+                        <div className="mt-4 flex items-center">
+                            <label className="text-sm w-20">Scale X</label>
+                            <input
+                                type="range"
+                                min="0.5"
+                                max="2"
+                                step="0.01"
+                                value={scaleX}
+                                onChange={handleScaleXChange}
+                                className="mt-2 flex-grow"
+                            />
+                        </div>
+
+                        {/* Scale Y Slider */}
+                        <div className="mt-4 flex items-center">
+                            <label className="text-sm w-20">Scale Y</label>
+                            <input
+                                type="range"
+                                min="0.5"
+                                max="2"
+                                step="0.01"
+                                value={scaleY}
+                                onChange={handleScaleYChange}
+                                className="mt-2 flex-grow"
+                            />
+                        </div>
+
+                        {/* Flip Buttons */}
+                        <div className="mt-4 p-6 flex justify-center gap-4">
+                            <Button variant="outline" onClick={handleFlipHorizontal} className="bg-blue-500 text-white">
+                                <FlipHorizontal className="w-5 h-5" /> Flip Horizontally
+                            </Button>
+                            <Button variant="outline" onClick={handleFlipVertical} className="bg-blue-500 text-white">
+                                <FlipVertical className="w-5 h-5" /> Flip Vertically
+                            </Button>
+                        </div>
+
+                        <div className="flex justify-end mt-4">
+                            <Button className="bg-red-500 hover:bg-red-400 mx-3" onClick={() => setIsOpen(false)}>
+                                Close
+                            </Button>
+                            <Button onClick={handleCrop}>
+                                Done
+                            </Button>
+                        </div>
+                    </DialogHeader>
+                </DialogContent>
+            </Dialog>
+        </>
+    );
 }

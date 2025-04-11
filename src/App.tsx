@@ -14,6 +14,7 @@ function App() {
     const [uploadedImage, setUploadedImage] = useState<string | null>(null); // (2) Original image (backup)
     const [baseImageWithBg, setBaseImageWithBg] = useState<string | null>(null); // (3) Working copy image for bgremover (saves all image edits except bgremove)
     const [savedMask, setSavedMask] = useState<string | null>(null); // (4) Working copy mask for bgremover (saves all mask edits from bgremove)
+    const [bgEdited, setBgEdited] = useState<Boolean>(false)
 
     // (!) Do we need this
     const [croppedImage, setCroppedImage] = useState<string | null>(null); // Stores cropped image
@@ -103,74 +104,76 @@ function App() {
     };
 
     // (1) Download working image -> baseImage
-    const handleDownload = async () => {
-        let fileName =
-            prompt("Enter a name for the file")?.trim() || "edited_image";
-
-        // ensure filename remains exactly as inputted
-        fileName = fileName.replace(/[^a-zA-Z0-9-_]/g, "");
-
-        // (??a) prioritize downloading only edited images
-        // const imageToDownload = croppedImage || bgRemovedImage || uploadedImage || baseImage;
-
-        // (??b) only download working copy
-        const imageToDownload = baseImage;
-
+    const loadImage = (src: string): Promise<HTMLImageElement> => {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "Anonymous";
+          img.src = src;
+          img.onload = () => resolve(img);
+          img.onerror = reject;
+        });
+      };
+      
+      const handleDownload = async () => {
+        // Use the working copy: assume baseImage is available and holds the current image URL.
+        const imageToDownload = baseImage; // Replace with the appropriate variable if different
         if (!imageToDownload) {
-            alert("No image available to download.");
-            return;
+          alert("No image available to download.");
+          return;
         }
-
-        // fetch the image to convert it into a blob
-        const response = await fetch(imageToDownload);
-        const imageBlob = await response.blob();
-
-        const img = new Image();
-        img.src = URL.createObjectURL(imageBlob);
-
-        img.onload = async () => {
-            const canvas = document.createElement("canvas");
-            const ctx = canvas.getContext("2d");
-
-            // Set the canvas size to the image's size
-            canvas.width = img.width;
-            canvas.height = img.height;
-
-            // Draw the white background first
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw the image on top of the white background
-            ctx.drawImage(img, 0, 0);
-
-            // Convert the canvas to a blob
-            const newBlob = await new Promise((resolve) =>
-                canvas.toBlob(resolve, "image/png")
-            );
-
-            try {
-                // use file system access API to let user choose where to save the file
-                const fileHandle = await window.showSaveFilePicker({
-                    suggestedName: `${fileName}.png`,
-                    types: [
-                        {
-                            description: "PNG Image",
-                            accept: { "image/png": [".png"] },
-                        },
-                    ],
-                });
-
-                // create a writable stream and write the blob to the file
-                const writableStream = await fileHandle.createWritable();
-                await writableStream.write(newBlob);
-                await writableStream.close();
-
-                alert("File saved successfully!");
-            } catch (error) {
-                console.error("File save canceled or failed:", error);
-            }
-        };
-    };
+      
+        try {
+          // Fetch the image and convert it into a blob.
+          const response = await fetch(imageToDownload);
+          const imageBlob = await response.blob();
+          
+          // Set file name directly
+          const fileName = "image.png";
+          
+          // Create an object URL from the blob and wait for image to load.
+          const objectUrl = URL.createObjectURL(imageBlob);
+          const img = await loadImage(objectUrl);
+          URL.revokeObjectURL(objectUrl); // Clean up the object URL once loaded
+      
+          // Create a canvas the same size as the image.
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return;
+      
+          // Draw a white background
+          ctx.fillStyle = "white";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+          // Draw the image on top of the white background.
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      
+          // Convert the canvas to a blob.
+          const newBlob: Blob = await new Promise((resolve) => {
+            canvas.toBlob((blob) => resolve(blob!), "image/png");
+          });
+      
+          // Use the File System Access API to save the file.
+          const fileHandle = await window.showSaveFilePicker({
+            suggestedName: fileName,
+            types: [
+              {
+                description: "PNG Image",
+                accept: { "image/png": [".png"] },
+              },
+            ],
+          });
+          const writableStream = await fileHandle.createWritable();
+          await writableStream.write(newBlob);
+          await writableStream.close();
+      
+          alert("File saved successfully!");
+        } catch (error) {
+          console.error("File save canceled or failed:", error);
+        }
+      };
+      
 
     return (
         <>
@@ -247,7 +250,7 @@ function App() {
                         3. setBaseImage (OUT: edited image -> to working image copy for display)
                         4. setSavedMask (OUT: latest mask output -> to working mask copy for use next time)
                     */}
-                    {croppedImage ? (
+                    {croppedImage && !bgEdited ? (
                         <BgRemoverPopUp
                             baseImageWithBg={baseImageWithBg} // For bgremover to display as src
                             savedMask={savedMask}             // For bgremover to display as overlay (if true)
@@ -262,7 +265,10 @@ function App() {
                     {savedMask ? (
                         <BgColourPopUp
                             bgRemovedImage={baseImage}
-                            setBgcolorImage={setBaseImage}
+                            setBgcolorImage={(img) => {
+                                setBaseImage(img); // Update the displayed image
+                                setBgEdited(true); // Disable Remove BG button
+                           }}
                         />
                     ) : (
                         <></>
@@ -276,6 +282,7 @@ function App() {
                                 setBaseImage(enhanced);  // Update the displayed image
                                 setCroppedImage(enhanced);  // Also update the cropped version state
                                 setBaseImageWithBg(enhanced); // For further background removal if needed
+                                setBgEdited(true)
                             }}
                         />
                     ) : (
