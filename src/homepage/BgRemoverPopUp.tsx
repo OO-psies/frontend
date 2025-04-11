@@ -247,8 +247,8 @@ export default function BgRemoverPopUp({ baseImageWithBg, savedMask, setBaseImag
             <DialogHeader>
                 <DialogTitle>Remove your background</DialogTitle>
                 <DialogDescription className="pb-4">
-                Use the brush to clean your background.<br />
-                Or click on the areas you want to clean
+                To Erase: Click on mouse and drag around<br />
+                To Restore: Hold on "Shift" key + Click on mouse and drag around
                 </DialogDescription>
 
                 {/* Cropping Image */}
