@@ -174,7 +174,7 @@ export default function BgRemoverPopUp({
   };
 
   // API (F4) - API Request onclick touchup
-  const handleTouchUp = async (convertedStrokeMask) => {
+  const handleTouchUp = async (refinedMask) => {
     // if touchup is clicked, send over: 1) new mask (brush strokes), 2) old mask, 3) image
     // receive: 1) new mask, 2) image
 
@@ -184,7 +184,7 @@ export default function BgRemoverPopUp({
     // console.log("baseImageWithBg for touch up")
     // console.log(baseImageWithBg)
     // console.log(base64Image);
-    const base64NewMask = await convertToBase64(convertedStrokeMask);
+    const base64NewMask = await convertToBase64(refinedMask);
     // console.log("supplementMask for touch up")
     // console.log(supplementMask)
     // console.log(base64NewMask);
@@ -258,17 +258,10 @@ export default function BgRemoverPopUp({
           <DialogHeader>
             <DialogTitle>Remove your background</DialogTitle>
             <DialogDescription className="pb-4">
-              Use the brush to clean your background.
+              To Erase: Click on mouse and drag around
               <br />
-              Or click on the areas you want to clean
+              To Restore: Hold on "Shift" key + Click on mouse and drag around
             </DialogDescription>
-            <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Remove your background</DialogTitle>
-                <DialogDescription className="pb-4">
-                To Erase: Click on mouse and drag around<br />
-                To Restore: Hold on "Shift" key + Click on mouse and drag around
-                </DialogDescription>
 
             {/* Cropping Image */}
 
