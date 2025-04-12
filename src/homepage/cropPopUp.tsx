@@ -2,92 +2,49 @@ import React, { useState, useRef, useEffect } from "react";
 import Cropper from "cropperjs";
 import "cropperjs/dist/cropper.css";
 
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Crop, Globe, FlipHorizontal, FlipVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import IDSizeByCountry from "@/homepage/IDSizeByCountry.json";
 
 interface CropPopUpProps {
   baseImage: string;
-  savedMask: string;
+  savedMask: string | null;
   setCroppedImage: (image: string | null) => void;
   setSavedMask: (image: string | null) => void;
 }
 
-export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSavedMask }: CropPopUpProps) {
+export default function CropPopUp({
+  baseImage,
+  savedMask,
+  setCroppedImage,
+  setSavedMask,
+}: CropPopUpProps) {
   const [isOpen, setIsOpen] = useState(false);
   const imageRef = useRef<HTMLImageElement | null>(null);
-  const maskRef = useRef<HTMLImageElement | null>(null); // ! for mask
+  const maskRef = useRef<HTMLImageElement | null>(null); // for mask
   const cropperRef = useRef<Cropper | null>(null);
-  const cropperMaskRef = useRef<Cropper | null>(null); // ! for mask
+  const cropperMaskRef = useRef<Cropper | null>(null); // for mask
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [scaleX, setScaleX] = useState(1);
   const [scaleY, setScaleY] = useState(1);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
-
-//   const convertToBase64 = async (image: File | string): Promise<string> => {
-
-//     // (2.1) if image null
-//     if (!image) {
-//         console.log("image does not exist");
-//     }
-
-//     // (2.2) if typeof(image) == string
-//     if (typeof(image) === 'string') {
-//         let file: File;
-//         const response = await fetch(image);
-//         const blob = await response.blob();
-//         file = new File([blob], "image.png", { type: blob.type });
-
-//         return new Promise((resolve, reject) => {
-//             const reader = new FileReader();
-//             reader.readAsDataURL(file); // Read file as Base64
-//             reader.onload = () => {
-//                 const base64String = reader.result as string;
-//                 // Remove the 'data:image/<file-type>;base64,' prefix if present
-//                 const base64Data = base64String.split(",")[1];
-//                 resolve(base64Data); // This gives you just the base64 part
-//             };
-//             reader.onerror = (error) => reject(error);
-//         });
-//     }
-
-//     // (2.3) if typeof(image) == file
-//     return new Promise((resolve, reject) => {
-//         const reader = new FileReader();
-//         reader.readAsDataURL(image); // Read file as Base64
-//         reader.onload = () => {
-//             const base64String = reader.result as string;
-//             // Remove the 'data:image/<file-type>;base64,' prefix if present
-//             const base64Data = base64String.split(",")[1];
-//             resolve(base64Data); // This gives you just the base64 part
-//         };
-//         reader.onerror = (error) => reject(error);
-//     });
-// }
-
-  // const check = convertToBase64(baseImage);
-  // const check2 = convertToBase64(savedMask);
-
-  // console.log("What is being loaded>>>", check);
-  // console.log("What is being loaded>>>", check2);
-
-  const img = new Image();
-  img.crossOrigin = "anonymous"; // Needed if the image is from another domain
-  img.src = savedMask; // load the mask
-
-  img.onload = () => {
-    // proceed to step 2
-    const canvas = document.createElement("canvas");
-    canvas.width = img.width;
-    canvas.height = img.height;
-
-    const ctx = canvas.getContext("2d");
-    ctx?.drawImage(img, 0, 0);
-  };
 
   useEffect(() => {
     if (!isOpen) {
@@ -96,7 +53,7 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
       setZoomLevel(1);
       setScaleX(1);
       setScaleY(1);
-      setAspectRatio(null)
+      setAspectRatio(null);
     }
   }, [isOpen]);
 
@@ -113,6 +70,7 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
         dragMode: "crop",
         responsive: true,
         zoomable: true,
+        wheelZoom: false, // Disable scroll to zoom
         background: false,
         aspectRatio: aspectRatio || NaN,
       });
@@ -120,7 +78,7 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
       console.log("Cropper initialized.");
     }
 
-    // ! for mask
+    // for mask
     if (isOpen && savedMask && maskRef.current) {
       console.log("Initializing Cropper for mask...");
       if (cropperMaskRef.current) {
@@ -133,6 +91,7 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
         dragMode: "crop",
         responsive: true,
         zoomable: true,
+        wheelZoom: false, // Disable scroll to zoom for mask
         background: false,
         aspectRatio: aspectRatio || NaN,
       });
@@ -148,12 +107,14 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
 
   const handleCountryChange = (country: string) => {
     setSelectedCountry(country);
-  
+
     if (!cropperRef.current) return;
-  
+
     const dimensions = IDSizeByCountry[country as keyof typeof IDSizeByCountry];
     if (dimensions) {
-      console.log(`Auto-cropping to ${dimensions.width}x${dimensions.height} ${dimensions.unit}`);
+      console.log(
+        `Auto-cropping to ${dimensions.width}x${dimensions.height} ${dimensions.unit}`
+      );
       const aspectRatio = dimensions.width / dimensions.height;
       cropperRef.current.setAspectRatio(aspectRatio);
       cropperMaskRef.current?.setAspectRatio(aspectRatio);
@@ -220,35 +181,41 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
 
     let canvas = cropperRef.current.getCroppedCanvas({
       imageSmoothingEnabled: true,
-      imageSmoothingQuality: "high"
+      imageSmoothingQuality: "high",
     });
 
     let canvasMask = cropperMaskRef.current?.getCroppedCanvas({
       imageSmoothingEnabled: true,
-      imageSmoothingQuality: "high"
+      imageSmoothingQuality: "high",
     });
 
     if (canvas) {
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const blobUrl = URL.createObjectURL(blob);
-          console.log("Cropped Image Blob URL:", blobUrl);
-          setCroppedImage(blobUrl);
-          // setBaseImage(blobUrl);
-          // setBaseImageWithBg(blobUrl);
-        }
-      }, "image/png", 1.0);
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            const blobUrl = URL.createObjectURL(blob);
+            console.log("Cropped Image Blob URL:", blobUrl);
+            setCroppedImage(blobUrl);
+          }
+        },
+        "image/png",
+        1.0
+      );
     }
 
     if (canvasMask) {
-      canvasMask.toBlob((blob) => {
-        if (blob) {
-          const blobUrl = URL.createObjectURL(blob);
-          console.log("Cropped Mask Blob URL:", blobUrl);
-          setSavedMask(blobUrl);
-          console.log("SAVED CANVAS MASK", blobUrl);
-        }
-      }, "image/png", 1.0);
+      canvasMask.toBlob(
+        (blob) => {
+          if (blob) {
+            const blobUrl = URL.createObjectURL(blob);
+            console.log("Cropped Mask Blob URL:", blobUrl);
+            setSavedMask(blobUrl);
+            console.log("SAVED CANVAS MASK", blobUrl);
+          }
+        },
+        "image/png",
+        1.0
+      );
     }
 
     setIsOpen(false);
@@ -258,26 +225,36 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
     <>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button disabled={!baseImage || baseImage === null} onClick={() => setIsOpen(true)}>
+          <Button
+            disabled={!baseImage || baseImage === null}
+            onClick={() => setIsOpen(true)}
+          >
             <Crop /> Crop & Resize
           </Button>
         </DialogTrigger>
 
-        <DialogContent>
+        {/* Make the dialog content scrollable with a max height */}
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adjust & Crop Your Image</DialogTitle>
             <DialogDescription className="pb-4">
-              Use the sliders to zoom, stretch, or flip your image.<br />
+              Use the sliders to zoom, stretch, or flip your image.
+              <br />
               Or Select A Country for Auto-Cropping
             </DialogDescription>
 
             {/* Cropping Image */}
             <div>
-              <img 
-                ref={imageRef} 
-                src={baseImage} 
-                alt="To Crop" 
-                style={{ maxWidth: "100%", display: "block" }} 
+              <img
+                ref={imageRef}
+                src={baseImage}
+                alt="To Crop"
+                style={{
+                  maxWidth: "100%",
+                  maxHeight: "70vh",
+                  display: "block",
+                  objectFit: "contain",
+                }}
                 onLoad={() => setImageLoaded(true)}
               />
             </div>
@@ -301,8 +278,8 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
                   </SelectContent>
                 </Select>
               </div>
-              
-              {/* handle aspect ratio */}
+
+              {/* Aspect Ratio Selection */}
               <div className="mt-4">
                 <Select onValueChange={handleAspectRatioChange}>
                   <SelectTrigger className="w-[180px]">
@@ -330,7 +307,7 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
                 step="0.01"
                 value={zoomLevel}
                 onChange={handleZoomChange}
-                className="mt-2 flex-grow "
+                className="mt-2 flex-grow"
               />
             </div>
 
@@ -344,7 +321,7 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
                 step="0.01"
                 value={scaleX}
                 onChange={handleScaleXChange}
-                className="mt-2 flex-grow "
+                className="mt-2 flex-grow"
               />
             </div>
 
@@ -358,27 +335,36 @@ export default function CropPopUp({ baseImage, savedMask, setCroppedImage, setSa
                 step="0.01"
                 value={scaleY}
                 onChange={handleScaleYChange}
-                className="mt-2 flex-grow "
+                className="mt-2 flex-grow"
               />
             </div>
 
             {/* Flip Buttons */}
             <div className="mt-4 p-6 flex justify-center gap-4">
-              <Button variant="outline" onClick={handleFlipHorizontal} className="bg-blue-500 text-white">
+              <Button
+                variant="outline"
+                onClick={handleFlipHorizontal}
+                className="bg-blue-500 text-white"
+              >
                 <FlipHorizontal className="w-5 h-5" /> Flip Horizontally
               </Button>
-              <Button variant="outline" onClick={handleFlipVertical} className="bg-blue-500 text-white">
+              <Button
+                variant="outline"
+                onClick={handleFlipVertical}
+                className="bg-blue-500 text-white"
+              >
                 <FlipVertical className="w-5 h-5" /> Flip Vertically
               </Button>
             </div>
 
             <div className="flex justify-end mt-4">
-              <Button className="bg-red-500 hover:bg-red-400 mx-3" onClick={() => setIsOpen(false)}>
+              <Button
+                className="bg-red-500 hover:bg-red-400 mx-3"
+                onClick={() => setIsOpen(false)}
+              >
                 Close
               </Button>
-              <Button onClick={handleCrop}>
-                Done
-              </Button>
+              <Button onClick={handleCrop}>Done</Button>
             </div>
           </DialogHeader>
         </DialogContent>
