@@ -317,18 +317,20 @@ export default function BgRemoverPopUp({
               </div>
             )}
 
-            {/* Done Button */}
-            <div className="flex justify-end mt-4 gap-2">
-              <Button onClick={handleBgRemove} disabled={isLoading}>
-                Touch Up
-              </Button>
-              <Button onClick={closeDialog} disabled={isLoading}>
-                Done
-              </Button>
-            </div>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+                {/* Done Button */}
+                    <div className="flex justify-end mt-4 gap-2">
+                            <Button onClick={handleBgRemove}
+                            disabled={isLoading}>
+                                Touch Up
+                            </Button>
+                            <Button onClick={closeDialog}
+                            disabled={isLoading}>
+                                Done
+                            </Button>
+                    </div>
+            </DialogHeader>
+            </DialogContent>
+        </Dialog>
+        </>
+    );
 }
