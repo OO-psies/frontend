@@ -57,7 +57,9 @@ const Webcamera = ({ onCapture }: { onCapture: (image: string) => void }) => {
       const thresholdX = videoWidth * 0.15;
 
       if (Math.abs(faceCenterX - videoCenterX) > thresholdX) {
-        setOverlayMessage(faceCenterX < videoCenterX ? "Move Right" : "Move Left");
+        setOverlayMessage(
+          faceCenterX < videoCenterX ? "Move Right" : "Move Left"
+        );
         setIsFaceCentered(false);
       } else {
         setOverlayMessage("");
@@ -73,7 +75,8 @@ const Webcamera = ({ onCapture }: { onCapture: (image: string) => void }) => {
   useEffect(() => {
     detectionIntervalRef.current = setInterval(checkFace, 500);
     return () => {
-      if (detectionIntervalRef.current) clearInterval(detectionIntervalRef.current);
+      if (detectionIntervalRef.current)
+        clearInterval(detectionIntervalRef.current);
     };
   }, [checkFace]);
 
@@ -96,7 +99,9 @@ const Webcamera = ({ onCapture }: { onCapture: (image: string) => void }) => {
         const blobUrl = URL.createObjectURL(blob);
         setCapturedImage(blobUrl);
       } else {
-        alert("Please ensure your face is detected and centered before taking a photo.");
+        alert(
+          "Please ensure your face is detected and centered before taking a photo."
+        );
       }
     }
   };
@@ -108,24 +113,27 @@ const Webcamera = ({ onCapture }: { onCapture: (image: string) => void }) => {
   };
 
   return (
-    <div>
+    <div className="">
       <Dialog>
         <DialogTrigger asChild>
-          <Button className="mt-3 text-xs"> Take photo </Button>
+          <Button className="mt-3"> Take photo </Button>
         </DialogTrigger>
 
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Capture Your Photo</DialogTitle>
             <DialogDescription>
-              Ensure your face is clearly visible, centered, and follows these guidelines:
+              Ensure your face is clearly visible, centered, and follows these
+              guidelines:
             </DialogDescription>
           </DialogHeader>
 
           <div className="mb-4 space-y-2 text-sm text-muted-foreground">
             <ul className="list-disc list-inside">
               <li>Position your face in the center of the frame.</li>
-              <li>Keep a neutral expression, with eyes open and mouth closed.</li>
+              <li>
+                Keep a neutral expression, with eyes open and mouth closed.
+              </li>
               <li>Ensure even lighting with no harsh shadows.</li>
               <li>Avoid wearing hats, glasses, or accessories.</li>
             </ul>
@@ -143,12 +151,17 @@ const Webcamera = ({ onCapture }: { onCapture: (image: string) => void }) => {
           <div className="relative">
             {webcamEnabled === false ? (
               <div className="text-destructive font-semibold">
-                Camera access is blocked. Please enable it in your browser settings and refresh the page.
+                Camera access is blocked. Please enable it in your browser
+                settings and refresh the page.
               </div>
             ) : capturedImage !== null ? (
               <div>
                 <p className="font-semibold">Captured Image:</p>
-                <img src={capturedImage} alt="Captured" className="mt-2 rounded-md border" />
+                <img
+                  src={capturedImage}
+                  alt="Captured"
+                  className="mt-2 rounded-md border"
+                />
               </div>
             ) : (
               <>
@@ -158,13 +171,14 @@ const Webcamera = ({ onCapture }: { onCapture: (image: string) => void }) => {
                   onUserMediaError={() => setWebcamEnabled(false)}
                   screenshotFormat="image/png"
                   className={`w-full rounded-md
-                    ${modelsLoaded
-                      ? isFaceDetected
-                        ? isFaceCentered
-                          ? "border-4 border-green-500"
-                          : "border-4 border-orange-500"
-                        : "border-4 border-red-500"
-                      : "border border-gray-300"
+                    ${
+                      modelsLoaded
+                        ? isFaceDetected
+                          ? isFaceCentered
+                            ? "border-4 border-green-500"
+                            : "border-4 border-orange-500"
+                          : "border-4 border-red-500"
+                        : "border border-gray-300"
                     }`}
                 />
 
@@ -185,7 +199,10 @@ const Webcamera = ({ onCapture }: { onCapture: (image: string) => void }) => {
               </Button>
             ) : (
               <div className="space-x-2">
-                <Button disabled={!webcamEnabled} onClick={() => setCapturedImage(null)}>
+                <Button
+                  disabled={!webcamEnabled}
+                  onClick={() => setCapturedImage(null)}
+                >
                   Retake photo
                 </Button>
                 <Button disabled={!webcamEnabled} onClick={confirmImage}>
