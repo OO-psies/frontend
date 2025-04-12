@@ -94,17 +94,6 @@ export default function BgRemoverPopUp({
     if (!image) {
       console.log("image does not exist");
     }
-    // Helper (F1) - Converts Base64 to Image URL
-    const convertToImageUrl = async (base64: string) => {
-        return `data:image/png;base64,${base64}`;
-    }
-    // Helper (F2) - Converts Image URL to Base64
-    const convertToBase64 = async (image: File | string | null): Promise<string> => {
-
-        // (2.1) if image null
-        if (!image) {
-            console.log("image does not exist");
-        }
 
     // (2.2) if typeof(image) == string
     if (typeof image === "string") {
@@ -183,16 +172,6 @@ export default function BgRemoverPopUp({
       setIsLoading(false);
     }
   };
-            setImageMask(dataMask); // mask for display overlay
-            console.log("new ImageMaskSet", imageMask)
-            loadBgRemovedImage(dataResult); 
-
-        } catch (error) {
-        console.error("Upload failed:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
   // API (F4) - API Request onclick touchup
   const handleTouchUp = async (refinedMask) => {
@@ -200,31 +179,19 @@ export default function BgRemoverPopUp({
     // receive: 1) new mask, 2) image
 
     setIsLoading(true);
-        setIsLoading(true);
 
-        // convert supplement mask to base64
-        const convertedSuppStrokeMask = toStrokeMask(strokeCanvas.current);
-        setSupplementMask(convertedSuppStrokeMask);
-        console.log("Just the strokes *>>>", convertedSuppStrokeMask);
-        console.log("supplementMask Check *>>>", supplementMask);
-
-        const base64Image = await convertToBase64(baseImageWithBg);
-        console.log("baseImageWithBg for touch up")
-        // console.log(baseImageWithBg)
-        console.log(base64Image);
-        console.log("data:image/png;base64," + base64Image)
-
-        const base64NewMask = await convertToBase64(convertedSuppStrokeMask)
-        console.log("supplementMask for touch up")
-        // console.log(supplementMask)
-        console.log(base64NewMask);
-        console.log("data:image/png;base64," + base64NewMask)
-
-        const base64CurrentMask = await convertToBase64(imageMask)
-        console.log("imageMask for touch up")
-        // console.log(imageMask)
-        console.log(base64CurrentMask)
-        console.log("data:image/png;base64," + base64CurrentMask)
+    const base64Image = await convertToBase64(baseImageWithBg);
+    // console.log("baseImageWithBg for touch up")
+    // console.log(baseImageWithBg)
+    // console.log(base64Image);
+    const base64NewMask = await convertToBase64(refinedMask);
+    // console.log("supplementMask for touch up")
+    // console.log(supplementMask)
+    // console.log(base64NewMask);
+    const base64CurrentMask = await convertToBase64(imageMask);
+    // console.log("imageMask for touch up")
+    // console.log(imageMask)
+    // console.log(base64CurrentMask)
 
     try {
       const response = await fetch(
@@ -265,12 +232,11 @@ export default function BgRemoverPopUp({
     const convertedStrokeMask = toStrokeMask(strokeCanvas.current);
     setSupplementMask(convertedStrokeMask);
     console.log("Just the strokes >>>", convertedStrokeMask);
-    // Event 2 - Calls F2, affects F4 (converts and calls F4 for sending to BE to touchup)
-    const handleBgRemove = async () => {
 
-        // Calls F4
-        handleTouchUp();
-    }
+    // Calls F4
+    handleTouchUp(convertedStrokeMask);
+    // console.log("Mask >>>", toMask(canvas.current)); // not in use
+  };
 
   // Event 3 - Sets latest imageMask -> savedMask and latest bgRemovedImage -> baseImage Closes Dialog
   const closeDialog = () => {
@@ -288,13 +254,14 @@ export default function BgRemoverPopUp({
           </Button>
         </DialogTrigger>
 
-            <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Remove your background</DialogTitle>
-                <DialogDescription className="pb-4">
-                To Erase: Click on mouse and drag around<br />
-                To Restore: Hold on "Shift" key + Click on mouse and drag around
-                </DialogDescription>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove your background</DialogTitle>
+            <DialogDescription className="pb-4">
+              To Erase: Click on mouse and drag around
+              <br />
+              To Restore: Hold on "Shift" key + Click on mouse and drag around
+            </DialogDescription>
 
             {/* Cropping Image */}
 
@@ -317,20 +284,18 @@ export default function BgRemoverPopUp({
               </div>
             )}
 
-                {/* Done Button */}
-                    <div className="flex justify-end mt-4 gap-2">
-                            <Button onClick={handleBgRemove}
-                            disabled={isLoading}>
-                                Touch Up
-                            </Button>
-                            <Button onClick={closeDialog}
-                            disabled={isLoading}>
-                                Done
-                            </Button>
-                    </div>
-            </DialogHeader>
-            </DialogContent>
-        </Dialog>
-        </>
-    );
+            {/* Done Button */}
+            <div className="flex justify-end mt-4 gap-2">
+              <Button onClick={handleBgRemove} disabled={isLoading}>
+                Touch Up
+              </Button>
+              <Button onClick={closeDialog} disabled={isLoading}>
+                Done
+              </Button>
+            </div>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
